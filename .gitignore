@@ -1,6 +1,3 @@
 *.o
 *.out
-*.yy.c
-*.output
-lextest
 .vscode/
