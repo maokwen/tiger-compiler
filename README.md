@@ -1,4 +1,4 @@
-#The practice of the 🐯Modern Compiler Implementation in C🐯
+# The practice of the 🐯Modern Compiler Implementation in C🐯
 
 - [x] Chapter 1
 - [x] Chapter 2
