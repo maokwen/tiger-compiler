@@ -7,7 +7,7 @@
 #include "symbol.h"
 #include "absyn.h"
 #include "errormsg.h"
-#include "parse.h"
+#include "parsetest.h"
 
 extern int yyparse(void);
 extern A_exp absyn_root;

@@ -35,57 +35,51 @@ void yyerror(char *s)
 %nonassoc DO OF
 %nonassoc THEN
 %nonassoc ELSE
-%left SEMICOLON
-%left ASSIGN
-%left OR
-%left AND
+%left     SEMICOLON
+%left     ASSIGN
+%left     OR
+%left     AND
 %nonassoc EQ NEQ GT LT GE LE
-%left PLUS MINUS
-%left TIMES DIVIDE
-%left UMINUS
+%left     PLUS MINUS
+%left     TIMES DIVIDE
+%left     UMINUS
 %%
 
 program: exp
 
 exp
+    : var_exp
+    | nil_exp
+    | int_exp
+    | str_exp
+    | call_exp
+    | op_exp
+    | record_exp
+    | seq_exp
+    | assign_exp
+    | if_exp
+    | while_exp
+    | for_exp
+    | break_exp
+    | let_exp
+    | array_exp
+
+var_exp
     : lvalue
-    | STRING
-    | INT
-    | MINUS exp %prec UMINUS
-    | exp_assign
-    | exp_call
-    | exp_if
-    | exp_iter
-    | BREAK
-    | exp_op
-    | exp_let
-    | LPAREN RPAREN
-    | LPAREN exp_seq RPAREN
-    | NIL
 
-exp_assign
-    : lvalue ASSIGN exp
-    | ID LBRACE RBRACE
-    | ID LBRACE assign_list RBRACE
-    | ID LBRACK exp RBRACK OF exp
+nil_exp
+    : NIL
 
-assign_list
-    : ID EQ exp
-    | assign_list COMMA ID EQ exp
+int_exp
+    : INT
 
-exp_call
-    : ID LPAREN RPAREN
-    | ID LPAREN exp_list RPAREN
+str_exp
+    : STRING
 
-exp_if
-    : IF exp THEN exp ELSE exp
-    | IF exp THEN exp
+call_exp
+    : ID LPAREN arg_list RPAREN
 
-exp_iter
-    : WHILE exp DO exp
-    | FOR ID ASSIGN exp TO exp DO exp
-
-exp_op
+op_exp
     : exp PLUS exp
     | exp MINUS exp
     | exp TIMES exp
@@ -93,58 +87,120 @@ exp_op
     | exp EQ exp
     | exp NEQ exp
     | exp GT exp
-    | exp LT exp 
-    | exp GE exp 
-    | exp LE exp 
+    | exp LT exp
+    | exp GE exp
+    | exp LE exp
+    | MINUS exp       %prec UMINUS
+
+record_exp
+    : ID LBRACE efield_list RBRACE
+
+seq_exp
+    : LPAREN seq_list RPAREN
+
+assign_exp
+    : lvalue ASSIGN exp
+
+if_exp
+    : IF exp THEN exp ELSE exp
+    | IF exp THEN exp
     | exp AND exp
     | exp OR exp
 
-exp_let
-    : LET decs IN END
-    | LET decs IN exp_seq END
+while_exp
+    : WHILE exp DO exp
 
-decs
-    : /* empty */
-    | decs dec
+for_exp
+    : FOR ID ASSIGN exp TO exp DO exp
+
+break_exp
+    : BREAK
+
+let_exp
+    : LET dec_list IN seq_list END
+
+array_exp
+    : ID LBRACK exp RBRACK OF exp
 
 dec
-    : tydec
-    | vardec
-    | fundec
+    : function_dec
+    | var_dec
+    | type_dec
 
-tydec
-    : TYPE ID EQ ty
+function_dec
+    : fundec_list
 
-ty
-    : ID
-    | LBRACE tyfields RBRACE
-    | ARRAY OF ID
-
-tyfields
-    : /* empty */
-    | tyfield_list
-
-tyfield_list
-    : ID COLON ID
-    | tyfield_list COMMA ID COLON ID
-
-vardec
+var_dec
     : VAR ID ASSIGN exp
     | VAR ID COLON ID ASSIGN exp
 
+type_dec
+    : namety_list
+
+namety
+    : TYPE ID EQ ty
+
+namety_list
+    : namety
+    | namety_list namety
+
+ty
+    : ID
+    | LBRACE field_list RBRACE
+    | ARRAY OF ID
+
+field
+    : ID COLON ID
+
+field_list
+    : /* empty */
+    | field_list_
+
+field_list_
+    : field
+    | field_list_ COMMA field
+
+seq_list
+  : /* empty */
+  | seq_list_
+
+seq_list_
+  : exp
+  | seq_list_ SEMICOLON exp
+
 fundec
-    : FUNCTION ID LPAREN tyfields RPAREN EQ exp
-    | FUNCTION ID LPAREN tyfields RPAREN COLON ID EQ exp
+    : FUNCTION ID LPAREN field_list RPAREN EQ exp
+    | FUNCTION ID LPAREN field_list RPAREN COLON ID EQ exp
 
-exp_seq
-    : exp
-    | exp_seq SEMICOLON exp
+fundec_list
+    : fundec
+    | fundec_list fundec
 
-exp_list
-    : exp
-    | exp_list COMMA exp
+dec_list
+    : /* empty */
+    | dec_list dec
+
+arg_list
+  : /* empty */
+  | arg_list_
+
+arg_list_
+  : exp
+  | arg_list_ COMMA exp
+
+efield
+    : ID EQ exp
+
+efield_list
+    : /* empty */
+    | efield_list_
+
+efield_list_
+    : efield
+    | efield_list_ COMMA efield
 
 lvalue
     : ID
     | lvalue DOT ID
     | lvalue LBRACK exp RBRACK
+    | ID LBRACK exp RBRACK

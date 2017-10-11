@@ -46,7 +46,7 @@ static void strbuf_pushback(char ch) {
 %}
 
 space     [ \t\n\r]
-id        [a-zA-Z][a-zA-Z0-9]*
+id        [a-zA-Z][a-zA-Z0-9_]*
 ctrl_char \^[@A-Z\[\\\]\^_\?]
 
 %x ID_STATE COMMENT_STATE STRING_STATE STRING_ESCAPE_STATE
