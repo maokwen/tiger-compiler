@@ -10,8 +10,8 @@
 
 void SEM_transProg(A_exp exp) {
   S_table tenv = E_base_tenv();
-  S_table venv = E_base_venv(); 
-  transExp(tenv, venv, exp);
+  S_table venv = E_base_venv();
+  transExp(venv, tenv, exp);
 }
 
 Ty_ty actual_ty(Ty_ty ty);
@@ -152,8 +152,9 @@ struct expty transExp_recordExp(S_table venv, S_table tenv, A_exp a) {
 
 struct expty transExp_seqExp(S_table venv, S_table tenv, A_exp a) {
   A_expList seq;
-  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail) transExp(venv, tenv, seq->head);
-  
+  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail)
+    transExp(venv, tenv, seq->head);
+
   if (!seq || !seq->head) return expTy(NULL, Ty_Void());
   return transExp(venv, tenv, seq->head);
 }
@@ -241,13 +242,13 @@ struct expty transExp_arrayExp(S_table venv, S_table tenv, A_exp a) {
   struct expty init = transExp(venv, tenv, a->u.array.init);
 
   if (!typ || typ->kind != Ty_array) {
-    EM_error(a->pos, "record type %s mismatched", S_name(a->u.array.typ));
+    EM_error(a->pos, "array type %s mismatched", S_name(a->u.array.typ));
     return expTy(NULL, Ty_Void());
   }
 
   if (size.ty->kind != Ty_int)
     EM_error(a->u.array.size->pos, "integer type required");
-  if (init.ty->kind != typ->kind)
+  if (init.ty->kind != typ->u.array->kind)
     EM_error(
         a->u.array.init->pos,
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
@@ -390,13 +391,14 @@ void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
     S_enter(tenv, name, Ty_Name(name, NULL));
   }
   for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
-    S_symbol name = decs->head->name;
-    Ty_ty type = actual_ty(transTy(tenv, decs->head->ty));
-    if (type->kind == Ty_name)
+    Ty_ty type = S_look(tenv, decs->head->name);
+    type->u.name.ty = transTy(tenv, decs->head->ty);
+  }
+  for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
+    Ty_ty type = S_look(tenv, decs->head->name);
+    if (type == actual_ty(type)) {
       EM_error(decs->head->ty->pos, "invalid recursive type declaration");
-    else {
-      Ty_ty ty = S_look(tenv, name);
-      ty->u.name.ty = type;
+      type->u.name.ty = Ty_Int();
     }
   }
 }
@@ -431,10 +433,11 @@ Ty_ty transTy(S_table tenv, A_ty a) {
 }
 
 Ty_ty actual_ty(Ty_ty ty) {
-  Ty_ty p = ty;
-  if (p->kind == Ty_name) p = p->u.name.ty;
-  for (; p && p->kind == Ty_name; p = p->u.name.ty)
-    if (p->u.name.sym == ty->u.name.sym) return ty;
+  if (ty->kind != Ty_name) return ty;
+
+  Ty_ty p = ty->u.name.ty;
+  for (; p->kind == Ty_name; p = p->u.name.ty)
+    if (p->u.name.sym == ty->u.name.sym) break;
   return p;
 }
 
@@ -447,12 +450,12 @@ int has_same_ty(Ty_ty lty, Ty_ty rty) {
 }
 
 Ty_tyList makeFormalTyList(S_table tenv, A_fieldList afields) {
-	Ty_tyList tys;
+  Ty_tyList tys;
   for (Ty_tyList tail = NULL; afields; tail = tys) {
-	  Ty_ty ty = S_look(tenv, afields->head->typ);
+    Ty_ty ty = S_look(tenv, afields->head->typ);
     tys = Ty_TyList(ty, tail);
   }
-	return tys;
+  return tys;
 }
 
 string type_msg(Ty_ty ty) {
@@ -485,7 +488,7 @@ string type_msg(Ty_ty ty) {
       strcat(str, type_msg(ty->u.array));
       break;
     case Ty_name:
-      strcpy(str, type_msg(actual_ty(ty)));
+      strcpy(str, S_name(ty->u.name.sym));
       break;
     case Ty_void:
       strcpy(str, "void");
