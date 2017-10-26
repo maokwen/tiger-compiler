@@ -158,7 +158,7 @@ struct expty transExp_assignExp(S_table venv, S_table tenv, A_exp a) {
     EM_error(
         a->u.assign.exp->pos,
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
-        type_msg(venv, lvar.ty), type_msg(rvar.ty));
+        type_msg(lvar.ty), type_msg(rvar.ty));
 
   return expTy(NULL, Ty_Void());
 }
@@ -204,8 +204,8 @@ struct expty transExp_forExp(S_table venv, S_table tenv, A_exp a) {
     EM_error(a->u.forr.lo->pos, "integer type required");
 
   S_beginScope(venv);
-  transDec(venv, tenv, A_VarDec(a->pos, a->u.forr.var, S_Symbol("int"),
-                                a->u.forr.lo));
+  transDec(venv, tenv,
+           A_VarDec(a->pos, a->u.forr.var, S_Symbol("int"), a->u.forr.lo));
   struct expty body = transExp(venv, tenv, a->u.forr.body);
   if (body.ty->kind != Ty_void)
     EM_error(a->u.forr.body->pos, "this exp must produce no value");
@@ -267,22 +267,50 @@ struct expty transVar(S_table venv, S_table tenv, A_var v) {
   }
 }
 
-// todo
 struct expty transVar_simpleVar(S_table venv, S_table tenv, A_var v) {
   E_enventry x = S_look(venv, v->u.simple);
-  if (x && x->kind == E_varEnventry)
-    return expTy(NULL, actual_ty(x->u.var.ty));
-  else {
+
+  if (!x || x->kind != E_varEnventry) {
     EM_error(v->pos, "undefined variable %s", S_name(v->u.simple));
     return expTy(NULL, Ty_Int());
   }
+
+  return expTy(NULL, actual_ty(x->u.var.ty));
 }
 
-// todo
-struct expty transVar_fieldVar(S_table venv, S_table tenv, A_var v) {}
+struct expty transVar_fieldVar(S_table venv, S_table tenv, A_var v) {
+  struct expty var = transVar(venv, tenv, v->u.field.var);
 
-// todo
-struct expty transVar_subscriptVar(S_table venv, S_table tenv, A_var v) {}
+  if (var.ty->kind != Ty_record)
+    EM_error(v->pos, "invalid types '%s' for record field", type_msg(var.ty));
+
+  Ty_fieldList fields;
+  for (fields = var.ty->u.record; fields != NULL; fields = fields->tail)
+    if (fields->head->name == v->u.field.sym) break;
+  if (!fields) {
+    EM_error(v->pos, "undefined record field %s", S_name(v->u.field.sym));
+    return expTy(NULL, Ty_Int());
+  }
+  return expTy(NULL, actual_ty(fields->head->ty));
+}
+
+struct expty transVar_subscriptVar(S_table venv, S_table tenv, A_var v) {
+  struct expty var = transVar(venv, tenv, v->u.subscript.var);
+  struct expty exp = transExp(venv, tenv, v->u.subscript.exp);
+
+  if (var.ty != Ty_array) {
+    EM_error(v->u.subscript.var->pos, "invalid types '%s' for array subscript",
+             type_msg(var.ty));
+    return expTy(NULL, Ty_Int());
+  }
+  if (exp.ty != Ty_int) {
+    EM_error(v->u.subscript.exp->pos, "invalid types '%s' for array subscript",
+             type_msg(exp.ty));
+    return expTy(NULL, Ty_Int());
+  }
+
+  return expTy(NULL, actual_ty(var.ty->u.array));
+}
 
 /**
  * Translate Declearion
@@ -303,10 +331,20 @@ void transDec(S_table venv, S_table tenv, A_dec d) {
   }
 }
 
-// todo: Deal with recursive variables
 void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
-  struct expty e = transExp(venv, tenv, d->u.var.init);
-  S_enter(venv, d->u.var.var, E_VarEnventry(e.ty));
+  struct expty init = transExp(venv, tenv, d->u.var.init);
+
+  if (d->u.var.typ) {
+    Ty_ty typ = actual_ty(S_look(tenv, d->u.var.typ));
+
+    if (!has_same_ty(d->u.var.typ, init.ty))
+      EM_error(d->u.var.init->pos,
+               "cannot initialize a variable of type '%s' with an rvalue of "
+               "type '%s'",
+               type_msg(typ), type_msg(init.ty));
+  }
+
+  S_enter(venv, d->u.var.var, E_VarEnventry(init.ty));
 }
 
 // todo: Deal with functions recursive or without return values
@@ -326,7 +364,8 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
   S_endScope(venv);
 }
 
-// todo: Extended to any length type declaration list, and the recursive condition
+// todo: Extended to any length type declaration list, and the recursive
+// condition
 void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
   S_enter(tenv, d->u.type->head->name, transTy(tenv, d->u.type->head->ty));
 }
@@ -338,11 +377,10 @@ Ty_ty actual_ty(Ty_ty ty) {
   return ty;
 }
 
-int has_same_ty(Ty_ty ty1, Ty_ty ty2) {
-  ty1 = actual_ty(ty1);
-  ty2 = actual_ty(ty2);
-  if (ty1->kind == ty2->kind || ty1->kind == Ty_record && ty2->kind == Ty_nil ||
-      ty2->kind == Ty_record && ty1->kind == Ty_nil)
+int has_same_ty(Ty_ty lty, Ty_ty rty) {
+  lty = actual_ty(lty);
+  rty = actual_ty(rty);
+  if (lty->kind == rty->kind || lty->kind == Ty_record && rty->kind == Ty_nil)
     return 1;
   return 0;
 }
