@@ -10,6 +10,8 @@
 
 Ty_ty actual_ty(Ty_ty ty);
 int has_same_ty(Ty_ty ty1, Ty_ty ty2);
+Ty_tyList makeFormalTyList(S_table tenv, A_fieldList afields);
+string type_msg(Ty_ty ty);
 
 /**
  * Translate Expression
@@ -347,27 +349,50 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
   S_enter(venv, d->u.var.var, E_VarEnventry(init.ty));
 }
 
-// todo: Deal with functions recursive or without return values
 void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
-  A_fundec f = d->u.function->head;
-  Ty_ty resultTy = S_look(tenv, f->result);
-  Ty_tyList formalTys = makeFormalTyList(tenv, f->params);
-  S_enter(venv, f->name, E_FunEntry(formalTys, resultTy));
-  S_beginScope(venv);
-  {
-    A_fieldList l;
-    Ty_tyList t;
-    for (l = f->params, t = formalTys; l; l = l->tail, t = t->tail)
-      S_enter(venv, l->head->name, E_VarEnventry(t->head));
+  for (A_fundecList fundecs = d->u.function; fundecs; fundecs = fundecs->tail) {
+    S_symbol name = fundecs->head->name;
+    Ty_tyList formals = makeFormalTyList(tenv, fundecs->head->params);
+    if (fundecs->head->result) {
+      S_enter(venv, name, E_FunEntry(formals, Ty_Void()));
+    } else {
+      Ty_ty result = S_look(tenv, fundecs->head->result);
+      S_enter(venv, name, E_FunEntry(formals, result));
+    }
   }
-  transExp(venv, tenv, d->u.function->head->body);
-  S_endScope(venv);
+
+  for (A_fundecList fundecs = d->u.function; fundecs; fundecs = fundecs->tail) {
+    S_symbol name = fundecs->head->name;
+    E_enventry x = S_look(venv, name);
+    Ty_tyList formals = x->u.fun.formals;
+
+    S_beginScope(venv);
+    {
+      A_fieldList l;
+      Ty_tyList t;
+      for (l = fundecs->head->params, t = formals; l; l = l->tail, t = t->tail)
+        S_enter(venv, l->head->name, E_VarEnventry(t->head));
+    }
+    transExp(venv, tenv, d->u.function->head->body);
+    S_endScope(venv);
+  }
 }
 
-// todo: Extended to any length type declaration list, and the recursive
-// condition
 void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
-  S_enter(tenv, d->u.type->head->name, transTy(tenv, d->u.type->head->ty));
+  for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
+    S_symbol name = decs->head->name;
+    S_enter(tenv, name, Ty_Name(name, NULL));
+  }
+  for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
+    S_symbol name = decs->head->name;
+    Ty_ty type = actual_ty(transTy(tenv, decs->head->ty));
+    if (type->kind == Ty_name)
+      EM_error(decs->head->ty->pos, "invalid recursive type declaration");
+    else {
+      Ty_ty ty = S_look(tenv, name);
+      ty->u.name.ty = type;
+    }
+  }
 }
 
 Ty_ty transTy(S_table tenv, A_ty a) {
@@ -400,8 +425,11 @@ Ty_ty transTy(S_table tenv, A_ty a) {
 }
 
 Ty_ty actual_ty(Ty_ty ty) {
-  while (ty && ty->kind == Ty_name) ty = ty->u.name.ty;
-  return ty;
+  Ty_ty p = ty;
+  if (p->kind == Ty_name) p = p->u.name.ty;
+  for (; p && p->kind == Ty_name; p = p->u.name.ty)
+    if (p->u.name.sym == ty->u.name.sym) return ty;
+  return p;
 }
 
 int has_same_ty(Ty_ty lty, Ty_ty rty) {
@@ -412,8 +440,17 @@ int has_same_ty(Ty_ty lty, Ty_ty rty) {
   return 0;
 }
 
-char* type_msg(Ty_ty ty) {
-  char* str = checked_malloc(200 * sizeof(char));
+Ty_tyList makeFormalTyList(S_table tenv, A_fieldList afields) {
+	Ty_tyList tys;
+  for (Ty_tyList tail = NULL; afields; tail = tys) {
+	  Ty_ty ty = S_look(tenv, afields->head->typ);
+    tys = Ty_TyList(ty, tail);
+  }
+	return tys;
+}
+
+string type_msg(Ty_ty ty) {
+  string str = checked_malloc(200 * sizeof(char));
   switch (ty->kind) {
     case Ty_record:
       strcpy(str, "record{ ");
