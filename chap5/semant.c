@@ -370,7 +370,34 @@ void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
   S_enter(tenv, d->u.type->head->name, transTy(tenv, d->u.type->head->ty));
 }
 
-Ty_ty transTy(S_table tenv, A_ty a);
+Ty_ty transTy(S_table tenv, A_ty a) {
+  switch (a->kind) {
+    case A_nameTy: {
+      return Ty_Name(a->u.name, S_look(tenv, a->u.name));
+    }
+    case A_recordTy: {
+      Ty_fieldList fields, tail = NULL;
+      A_fieldList afields = a->u.record;
+
+      for (A_fieldList afields = a->u.record; afields;
+           afields = afields->tail) {
+        Ty_ty typ = S_look(tenv, afields->head->typ);
+        if (!typ) {
+          EM_error(afields->head->pos, "type %s mismatched",
+                   S_name(afields->head->name));
+          typ = Ty_Int();
+        }
+        fields = Ty_FieldList(Ty_Field(afields->head->name, typ), tail);
+        tail = fields;
+      }
+
+      return Ty_Record(fields);
+    }
+    case A_arrayTy: {
+      return Ty_Array(S_look(tenv, a->u.array));
+    }
+  }
+}
 
 Ty_ty actual_ty(Ty_ty ty) {
   while (ty && ty->kind == Ty_name) ty = ty->u.name.ty;
