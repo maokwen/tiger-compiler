@@ -76,7 +76,7 @@ struct expty transExp_callExp(S_table venv, S_table tenv, A_exp a) {
 
   // check func type
   if (!x || x->kind != E_funEntry) {
-    EM_error(pos, "undefined variable %s", S_name(a->u.call.func));
+    EM_error(pos, "undeclared variable %s", S_name(a->u.call.func));
     return expTy(NULL, Ty_Void());
   }
 
@@ -151,10 +151,10 @@ struct expty transExp_recordExp(S_table venv, S_table tenv, A_exp a) {
 }
 
 struct expty transExp_seqExp(S_table venv, S_table tenv, A_exp a) {
-  A_expList seq = a->u.seq;
+  A_expList seq;
+  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail) transExp(venv, tenv, seq->head);
+  
   if (!seq || !seq->head) return expTy(NULL, Ty_Void());
-  for (; seq->tail; seq = seq->tail) transExp(venv, tenv, seq->head);
-
   return transExp(venv, tenv, seq->head);
 }
 
@@ -279,7 +279,7 @@ struct expty transVar_simpleVar(S_table venv, S_table tenv, A_var v) {
   E_enventry x = S_look(venv, v->u.simple);
 
   if (!x || x->kind != E_varEnventry) {
-    EM_error(v->pos, "undefined variable %s", S_name(v->u.simple));
+    EM_error(v->pos, "undeclared variable %s", S_name(v->u.simple));
     return expTy(NULL, Ty_Int());
   }
 
@@ -307,7 +307,7 @@ struct expty transVar_subscriptVar(S_table venv, S_table tenv, A_var v) {
   struct expty exp = transExp(venv, tenv, v->u.subscript.exp);
 
   if (var.ty->kind != Ty_array) {
-    EM_error(v->u.subscript.var->pos, "invalid types '%s' for array subscript",
+    EM_error(v->u.subscript.var->pos, "variable type '%s' is not array",
              type_msg(var.ty));
     return expTy(NULL, Ty_Int());
   }

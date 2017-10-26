@@ -176,7 +176,7 @@ namety
 
 namety_list
     : namety                            {$$ = A_NametyList($1,NULL);}
-    | namety_list namety                {$$ = A_NametyList($2,$1);}
+    | namety namety_list                {$$ = A_NametyList($1,$2);}
 
 ty
     : ID                                {$$ = A_NameTy(EM_tokPos,S_Symbol($1));}
@@ -192,15 +192,15 @@ field_list
 
 field_list_
     : field                             {$$ = A_FieldList($1,NULL);}
-    | field_list_ COMMA field           {$$ = A_FieldList($3,$1);}
+    | field COMMA field_list_           {$$ = A_FieldList($1,$3);}
 
 seq_list
-    : /* empty */                         {$$ = NULL;}
-    | seq_list_                           {$$ =$1;}
+    : /* empty */                       {$$ = NULL;}
+    | seq_list_                         {$$ =$1;}
 
 seq_list_
-    : exp                                 {$$ = A_ExpList($1,NULL);}
-    | seq_list_ SEMICOLON exp             {$$ = A_ExpList($3,$1);}
+    : exp                               {$$ = A_ExpList($1,NULL);}
+    | exp SEMICOLON seq_list_           {$$ = A_ExpList($1,$3);}
 
 fundec
     : FUNCTION ID LPAREN field_list RPAREN EQ exp           {$$ = A_Fundec(EM_tokPos,S_Symbol($2),$4,NULL,$7);}
@@ -208,19 +208,19 @@ fundec
 
 fundec_list
     : fundec                            {$$ = A_FundecList($1,NULL);}
-    | fundec_list fundec                {$$ = A_FundecList($2,$1);}
+    | fundec fundec_list                {$$ = A_FundecList($1,$2);}
 
 dec_list
     : /* empty */                       {$$ = NULL;}
-    | dec_list dec                      {$$ = A_DecList($2,$1);}
+    | dec dec_list                      {$$ = A_DecList($1,$2);}
 
 arg_list
-    : /* empty */                         {$$ = NULL;}
-    | arg_list_                           {$$ =$1;}
+    : /* empty */                       {$$ = NULL;}
+    | arg_list_                         {$$ = $1;}
 
 arg_list_
-    : exp                                 {$$ = A_ExpList($1,NULL);}
-    | arg_list_ COMMA exp                 {$$ = A_ExpList($3,$1);}
+    : exp                               {$$ = A_ExpList($1,NULL);}
+    | exp COMMA arg_list_               {$$ = A_ExpList($1,$3);}
 
 efield
     : ID EQ exp                         {$$ = A_Efield(S_Symbol($1),$3);}
@@ -231,7 +231,7 @@ efield_list
 
 efield_list_
     : efield                            {$$ = A_EfieldList($1,NULL);}
-    | efield_list_ COMMA efield         {$$ = A_EfieldList($3,$1);}
+    | efield COMMA efield_list_         {$$ = A_EfieldList($1,$3);}
 
 lvalue
     : ID                                {$$ = A_SimpleVar(EM_tokPos,S_Symbol($1));}
