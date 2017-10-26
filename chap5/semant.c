@@ -248,7 +248,8 @@ struct expty transExp_arrayExp(S_table venv, S_table tenv, A_exp a) {
 
   if (size.ty->kind != Ty_int)
     EM_error(a->u.array.size->pos, "integer type required");
-  if (init.ty->kind != typ->u.array->kind)
+
+  if (!has_same_ty(init.ty, typ->u.array))
     EM_error(
         a->u.array.init->pos,
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
@@ -488,7 +489,10 @@ string type_msg(Ty_ty ty) {
       strcat(str, type_msg(ty->u.array));
       break;
     case Ty_name:
-      strcpy(str, S_name(ty->u.name.sym));
+      if (ty->u.name.ty)
+        strcpy(str, type_msg(actual_ty(ty)));
+      else
+        strcpy(str, S_name(ty->u.name.sym));
       break;
     case Ty_void:
       strcpy(str, "void");
