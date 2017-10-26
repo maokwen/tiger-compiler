@@ -1,5 +1,7 @@
 *.o
 *.out
+y.tab.c
+y.tab.h
 *.yy.c
 *.output
 lextest

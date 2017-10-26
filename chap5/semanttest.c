@@ -5,14 +5,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "util.h"
-#include "errormsg.h"
 #include "symbol.h"
 #include "absyn.h"
-#include "semant.h"
+#include "errormsg.h"
 #include "semanttest.h"
 
 extern int yyparse(void);
 extern A_exp absyn_root;
+extern void SEM_transProg(A_exp);
 
 /* parse source file fname; 
    return abstract syntax data structure */

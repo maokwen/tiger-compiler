@@ -3,6 +3,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "util.h"
 #include "symbol.h"
 #include "absyn.h"
@@ -11,6 +12,7 @@
 
 extern int yyparse(void);
 extern A_exp absyn_root;
+extern void pr_exp(FILE *out, A_exp v, int d);
 
 /* parse source file fname; 
    return abstract syntax data structure */

@@ -1,12 +1,18 @@
-#include "semant.h"
 #include <stdio.h>  // for NULL
 #include <string.h>
-#include "absyn.h"
-#include "env.h"
+#include "util.h"
 #include "errormsg.h"
 #include "symbol.h"
+#include "absyn.h"
 #include "types.h"
-#include "util.h"
+#include "env.h"
+#include "semant.h"
+
+void SEM_transProg(A_exp exp) {
+  S_table tenv = E_base_tenv();
+  S_table venv = E_base_venv(); 
+  transExp(tenv, venv, exp);
+}
 
 Ty_ty actual_ty(Ty_ty ty);
 int has_same_ty(Ty_ty ty1, Ty_ty ty2);
@@ -85,7 +91,7 @@ struct expty transExp_callExp(S_table venv, S_table tenv, A_exp a) {
       break;
     }
     args = args->tail;
-    formals = args->tail;
+    formals = formals->tail;
   }
   if (args || formals) EM_error(pos, "para type mismatched");
 
@@ -95,7 +101,7 @@ struct expty transExp_callExp(S_table venv, S_table tenv, A_exp a) {
 struct expty transExp_opExp(S_table venv, S_table tenv, A_exp a) {
   A_oper oper = a->u.op.oper;
   struct expty left = transExp(venv, tenv, a->u.op.left);
-  struct expty right = transExp(venv, tenv, a->u.op.left);
+  struct expty right = transExp(venv, tenv, a->u.op.right);
 
   if (oper == A_plusOp || oper == A_minusOp || oper == A_timesOp ||
       oper == A_divideOp || oper == A_ltOp || oper == A_leOp ||
@@ -108,8 +114,8 @@ struct expty transExp_opExp(S_table venv, S_table tenv, A_exp a) {
 
   if (oper == A_eqOp || oper == A_neqOp) {
     if (left.ty->kind != right.ty->kind ||
-        left.ty->kind == Ty_nil && right.ty->kind == Ty_record ||
-        left.ty->kind == Ty_record && right.ty->kind == Ty_nil)
+        (left.ty->kind == Ty_nil && right.ty->kind == Ty_record) ||
+        (left.ty->kind == Ty_record && right.ty->kind == Ty_nil))
       EM_error(a->u.op.right->pos, "same type required");
   }
 
@@ -154,7 +160,7 @@ struct expty transExp_seqExp(S_table venv, S_table tenv, A_exp a) {
 
 struct expty transExp_assignExp(S_table venv, S_table tenv, A_exp a) {
   struct expty lvar = transVar(venv, tenv, a->u.assign.var);
-  struct expty rvar = transVar(venv, tenv, a->u.assign.exp);
+  struct expty rvar = transExp(venv, tenv, a->u.assign.exp);
 
   if (!has_same_ty(lvar.ty, rvar.ty))
     EM_error(
@@ -176,12 +182,12 @@ struct expty transExp_ifExp(S_table venv, S_table tenv, A_exp a) {
     struct expty elsee = transExp(venv, tenv, a->u.iff.elsee);
     if (!has_same_ty(then.ty, elsee.ty))
       EM_error(a->u.iff.elsee->pos, "incompatible types ('%s' and '%s')",
-               S_name(then.ty), S_name(elsee.ty));
-    return expTy(NULL, then);
+               type_msg(then.ty), type_msg(elsee.ty));
+    return expTy(NULL, then.ty);
   }
 
-  if (then.ty->kind == Ty_void)
-    EM_error(a->u.iff.then, "this exp must produce no value");
+  if (then.ty->kind != Ty_void)
+    EM_error(a->u.iff.then->pos, "this exp must produce no value");
 
   return expTy(NULL, Ty_Void());
 }
@@ -213,7 +219,7 @@ struct expty transExp_forExp(S_table venv, S_table tenv, A_exp a) {
     EM_error(a->u.forr.body->pos, "this exp must produce no value");
   S_endScope(venv);
 
-  return expTy(NULL, Ty_void);
+  return expTy(NULL, Ty_Void());
 }
 
 struct expty transExp_letExp(S_table venv, S_table tenv, A_exp a) {
@@ -300,12 +306,12 @@ struct expty transVar_subscriptVar(S_table venv, S_table tenv, A_var v) {
   struct expty var = transVar(venv, tenv, v->u.subscript.var);
   struct expty exp = transExp(venv, tenv, v->u.subscript.exp);
 
-  if (var.ty != Ty_array) {
+  if (var.ty->kind != Ty_array) {
     EM_error(v->u.subscript.var->pos, "invalid types '%s' for array subscript",
              type_msg(var.ty));
     return expTy(NULL, Ty_Int());
   }
-  if (exp.ty != Ty_int) {
+  if (exp.ty->kind != Ty_int) {
     EM_error(v->u.subscript.exp->pos, "invalid types '%s' for array subscript",
              type_msg(exp.ty));
     return expTy(NULL, Ty_Int());
@@ -339,7 +345,7 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
   if (d->u.var.typ) {
     Ty_ty typ = actual_ty(S_look(tenv, d->u.var.typ));
 
-    if (!has_same_ty(d->u.var.typ, init.ty))
+    if (!has_same_ty(typ, init.ty))
       EM_error(d->u.var.init->pos,
                "cannot initialize a variable of type '%s' with an rvalue of "
                "type '%s'",
@@ -435,7 +441,7 @@ Ty_ty actual_ty(Ty_ty ty) {
 int has_same_ty(Ty_ty lty, Ty_ty rty) {
   lty = actual_ty(lty);
   rty = actual_ty(rty);
-  if (lty->kind == rty->kind || lty->kind == Ty_record && rty->kind == Ty_nil)
+  if (lty->kind == rty->kind || (lty->kind == Ty_record && rty->kind == Ty_nil))
     return 1;
   return 0;
 }
