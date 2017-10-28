@@ -1,8 +1,7 @@
 system 'make'
-(1..48).each do |i|
-    system './a.out ../testcases/test' + i.to_s + '.tig' +
-                ' > ../testoutput/out' + i.to_s + '.txt'
+(1..49).each do |i|
+    testfile = "test#{i.to_s}.tig"
+    printf "\033[1;36;40m" + testfile + "\033[0m" + ': ' + "\033[0;33;40m\n"
+    system './a.out ../testcases/' + testfile
+    printf "\033[0m"
 end
-
-print "A syntax error testcase: "
-system './a.out ../testcases/test49.tig'

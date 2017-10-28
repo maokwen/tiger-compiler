@@ -13,7 +13,7 @@ E_enventry E_VarEnventry(Ty_ty ty) {
 }
 E_enventry E_FunEntry(Ty_tyList formals, Ty_ty result) {
   E_enventry env=checked_malloc(sizeof(*env));
-  env->kind=E_varEnventry; env->u.fun.formals=formals; env->u.fun.result=result;
+  env->kind=E_funEntry; env->u.fun.formals=formals; env->u.fun.result=result;
   return env;
 }
 
