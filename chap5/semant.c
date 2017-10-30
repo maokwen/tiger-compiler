@@ -456,6 +456,7 @@ Ty_ty transTy(S_table tenv, A_ty a) {
 }
 
 Ty_ty actual_ty(Ty_ty ty) {
+  if (!ty) return NULL;
   if (ty->kind != Ty_name) return ty;
 
   Ty_ty p = ty->u.name.ty;
