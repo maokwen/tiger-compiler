@@ -1,5 +1,7 @@
-# Labs of the Modern Compiler Implementation in C
+== Labs of the Modern Compiler Implementation in C
 
+[.progress]
+====
 - [x] Chapter 1
 - [x] Chapter 2
 - [x] Chapter 3
@@ -12,3 +14,4 @@
 - [ ] Chapter 10
 - [ ] Chapter 11
 - [ ] Chapter 12
+====
