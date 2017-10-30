@@ -375,6 +375,7 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
     S_symbol name = fundecs->head->name;
     E_enventry x = S_look(venv, name);
     Ty_tyList formals = x->u.fun.formals;
+    Ty_ty result = x->u.fun.result;
 
     S_beginScope(venv);
     {
@@ -382,8 +383,12 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
       Ty_tyList t;
       for (l = fundecs->head->params, t = formals; l; l = l->tail, t = t->tail)
         S_enter(venv, l->head->name, E_VarEnventry(t->head));
+      
+      // check return type
+      struct expty body = transExp(venv, tenv, fundecs->head->body);
+      if (!has_same_ty(result, body.ty))
+        EM_error(fundecs->head->pos, "return type mismatched (%s and %s)", type_msg(result), type_msg(body.ty));
     }
-    transExp(venv, tenv, fundecs->head->body);
     S_endScope(venv);
   }
 }
