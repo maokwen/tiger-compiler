@@ -354,7 +354,7 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
                type_msg(typ), type_msg(init.ty));
   } else if (init.ty->kind == Ty_nil)
     EM_error(d->u.var.init->pos,
-    "cannot initialize a nil type without specified record type");
+             "cannot initialize a nil type without specified record type");
 
   S_enter(venv, d->u.var.var, E_VarEnventry(init.ty));
 }
@@ -363,6 +363,13 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
   for (A_fundecList fundecs = d->u.function; fundecs; fundecs = fundecs->tail) {
     S_symbol name = fundecs->head->name;
     Ty_tyList formals = makeFormalTyList(tenv, fundecs->head->params);
+
+    for (A_fundecList f = d->u.function; f != fundecs; f = f->tail)
+      if (f->head->name == name)
+        EM_error(f->head->pos,
+                 "there are two functions with the same name in the same batch "
+                 "of mutually recursive functions");
+
     if (!fundecs->head->result) {
       S_enter(venv, name, E_FunEntry(formals, Ty_Void()));
     } else {
@@ -383,11 +390,12 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
       Ty_tyList t;
       for (l = fundecs->head->params, t = formals; l; l = l->tail, t = t->tail)
         S_enter(venv, l->head->name, E_VarEnventry(t->head));
-      
+
       // check return type
       struct expty body = transExp(venv, tenv, fundecs->head->body);
       if (!has_same_ty(result, body.ty))
-        EM_error(fundecs->head->pos, "return type mismatched (%s and %s)", type_msg(result), type_msg(body.ty));
+        EM_error(fundecs->head->pos, "return type mismatched (%s and %s)",
+                 type_msg(result), type_msg(body.ty));
     }
     S_endScope(venv);
   }
@@ -396,6 +404,13 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
 void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
   for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
     S_symbol name = decs->head->name;
+
+    for (A_nametyList ds = d->u.type; ds != decs; ds = ds->tail)
+      if (ds->head->name == name)
+        EM_error(d->pos,
+                 "there are two types with the same name in the same "
+                 "(consecutive) batch of mutually recursive types");
+
     S_enter(tenv, name, Ty_Name(name, NULL));
   }
   for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
