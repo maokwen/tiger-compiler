@@ -352,7 +352,9 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
                "cannot initialize a variable of type '%s' with an rvalue of "
                "type '%s'",
                type_msg(typ), type_msg(init.ty));
-  }
+  } else if (init.ty->kind == Ty_nil)
+    EM_error(d->u.var.init->pos,
+    "cannot initialize a nil type without specified record type");
 
   S_enter(venv, d->u.var.var, E_VarEnventry(init.ty));
 }
