@@ -147,7 +147,7 @@ struct expty transExp_recordExp(S_table venv, S_table tenv, A_exp a) {
   }
   if (efields || fields) EM_error(pos, "record type mismatched");
 
-  return expTy(NULL, typ);
+  return expTy(NULL, S_look(tenv, a->u.record.typ));
 }
 
 struct expty transExp_seqExp(S_table venv, S_table tenv, A_exp a) {
@@ -255,7 +255,7 @@ struct expty transExp_arrayExp(S_table venv, S_table tenv, A_exp a) {
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
         type_msg(typ), type_msg(init.ty));
 
-  return expTy(NULL, typ);
+  return expTy(NULL, S_look(tenv, a->u.array.typ));
 }
 
 /**
@@ -345,7 +345,7 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
   struct expty init = transExp(venv, tenv, d->u.var.init);
 
   if (d->u.var.typ) {
-    Ty_ty typ = actual_ty(S_look(tenv, d->u.var.typ));
+    Ty_ty typ = S_look(tenv, d->u.var.typ);
 
     if (!has_same_ty(typ, init.ty))
       EM_error(d->u.var.init->pos,
@@ -466,6 +466,14 @@ Ty_ty actual_ty(Ty_ty ty) {
 }
 
 int has_same_ty(Ty_ty lty, Ty_ty rty) {
+  if (lty->kind == Ty_name && rty->kind == Ty_name) {
+    Ty_ty l, r;
+    for (l = lty; l->u.name.ty->kind == Ty_name; l = l->u.name.ty);
+    for (r = rty; r->u.name.ty->kind == Ty_name; r = r->u.name.ty);
+    if (l->u.name.sym == r->u.name.sym)
+      return 1;
+    return 0;
+  }
   lty = actual_ty(lty);
   rty = actual_ty(rty);
   if (lty->kind == rty->kind || (lty->kind == Ty_record && rty->kind == Ty_nil))
