@@ -27,3 +27,14 @@ util.o: util.c util.h
 
 clean: 
 	rm -f a.out util.o parsetest.o lex.yy.o errormsg.o y.tab.c y.tab.h y.tab.o
+
+all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
+
+test: $(all-tests)
+
+test49.test:
+	@echo "A testcase to test syntax error:"
+	./a.out ../testcases/test49.tig
+
+%.test: ../testcases/%.tig
+	./a.out $< > /dev/null

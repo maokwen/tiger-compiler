@@ -45,3 +45,10 @@ util.o: util.c util.h
 
 clean: 
 	rm -f a.out util.o semanttest.o lex.yy.o errormsg.o y.tab.c y.tab.h y.tab.o prabsyn.o symbol.o table.o absyn.o lex.yy.c y.output semant.o types.o env.o
+
+all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
+
+test: $(all-tests)
+
+%.test: ../testcases/%.tig
+	./a.out $< > ../testoutput/$@ 2>&1

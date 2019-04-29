@@ -1,5 +1,5 @@
-lextest: driver.o lex.yy.o errormsg.o util.o
-	cc -g -o lextest driver.o lex.yy.o errormsg.o util.o
+a.out: driver.o lex.yy.o errormsg.o util.o
+	cc -g driver.o lex.yy.o errormsg.o util.o
 
 driver.o: driver.c tokens.h errormsg.h util.h
 	cc -g -c driver.c
@@ -18,3 +18,10 @@ util.o: util.c util.h
 
 clean: 
 	rm -f a.out util.o driver.o lex.yy.o lex.yy.c errormsg.o
+
+all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
+
+test: $(all-tests)
+
+%.test: ../testcases/%.tig
+	./a.out $< > ../testoutput/$@
