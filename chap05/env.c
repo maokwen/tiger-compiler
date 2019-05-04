@@ -6,9 +6,9 @@
 #include "types.h"
 #include "env.h"
 
-E_enventry E_VarEnventry(Ty_ty ty) {
+E_enventry E_VarEntry(Ty_ty ty) {
   E_enventry env=checked_malloc(sizeof(*env));
-  env->kind=E_varEnventry; env->u.var.ty=ty;
+  env->kind=E_varEntry; env->u.var.ty=ty;
   return env;
 }
 E_enventry E_FunEntry(Ty_tyList formals, Ty_ty result) {

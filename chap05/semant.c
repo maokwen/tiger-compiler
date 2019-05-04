@@ -280,7 +280,7 @@ struct expty transVar(S_table venv, S_table tenv, A_var v) {
 struct expty transVar_simpleVar(S_table venv, S_table tenv, A_var v) {
   E_enventry x = S_look(venv, v->u.simple);
 
-  if (!x || x->kind != E_varEnventry) {
+  if (!x || x->kind != E_varEntry) {
     EM_error(v->pos, "undeclared variable %s", S_name(v->u.simple));
     return expTy(NULL, Ty_Int());
   }
@@ -356,7 +356,7 @@ void transDec_varDec(S_table venv, S_table tenv, A_dec d) {
     EM_error(d->u.var.init->pos,
              "cannot initialize a nil type without specified record type");
 
-  S_enter(venv, d->u.var.var, E_VarEnventry(init.ty));
+  S_enter(venv, d->u.var.var, E_VarEntry(init.ty));
 }
 
 void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
@@ -389,7 +389,7 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
       A_fieldList l;
       Ty_tyList t;
       for (l = fundecs->head->params, t = formals; l; l = l->tail, t = t->tail)
-        S_enter(venv, l->head->name, E_VarEnventry(t->head));
+        S_enter(venv, l->head->name, E_VarEntry(t->head));
 
       // check return type
       struct expty body = transExp(venv, tenv, fundecs->head->body);
