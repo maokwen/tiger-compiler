@@ -52,7 +52,5 @@ State 1
     $default  reduce using rule 82 (lvalue)
 ```
 
-This conflict of `lvalue -> id` and `lvalue-> lvalue[exp]`,
-the default behavior is not what I want,
-so I add a new rule `lvalue -> id[exp]`.
-The conflict still exists, but default behavior is new what I want.
+This conflict of `array_exp -> id[exp] of exp` and `lvalue -> id[exp]`,
+The default behavior is to shift.
