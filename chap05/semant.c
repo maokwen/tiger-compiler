@@ -76,7 +76,7 @@ struct expty transExp_callExp(S_table venv, S_table tenv, A_exp a) {
 
   // check func type
   if (!x || x->kind != E_funEntry) {
-    EM_error(pos, "undeclared variable %s", S_name(a->u.call.func));
+    EM_error(pos, "undeclared variable '%s'", S_name(a->u.call.func));
     return expTy(NULL, Ty_Void());
   }
 
@@ -87,13 +87,13 @@ struct expty transExp_callExp(S_table venv, S_table tenv, A_exp a) {
     struct expty arg = transExp(venv, tenv, args->head);
     pos = args->head->pos;
     if (!has_same_ty(formals->head, arg.ty)) {
-      EM_error(args->head->pos, "para type mismatched");
+      EM_error(args->head->pos, "formals and actuals have different types");
       break;
     }
     args = args->tail;
     formals = formals->tail;
   }
-  if (args || formals) EM_error(pos, "para type mismatched");
+  if (args || formals) EM_error(pos, "formals and actuals have different types");
 
   return expTy(NULL, actual_ty(x->u.fun.result));
 }
@@ -107,9 +107,9 @@ struct expty transExp_opExp(S_table venv, S_table tenv, A_exp a) {
       oper == A_divideOp || oper == A_ltOp || oper == A_leOp ||
       oper == A_gtOp || oper == A_geOp) {
     if (left.ty->kind != Ty_int)
-      EM_error(a->u.op.left->pos, "integer required");
+      EM_error(a->u.op.left->pos, "operate of incompatible types");
     if (right.ty->kind != Ty_int)
-      EM_error(a->u.op.right->pos, "integer required");
+      EM_error(a->u.op.right->pos, "operate of incompatible types");
   }
 
   if (oper == A_eqOp || oper == A_neqOp) {
@@ -128,7 +128,7 @@ struct expty transExp_recordExp(S_table venv, S_table tenv, A_exp a) {
 
   // check record type
   if (!typ || typ->kind != Ty_record) {
-    EM_error(pos, "record type %s mismatched", S_name(a->u.record.typ));
+    EM_error(pos, "record type '%s' mismatched", S_name(a->u.record.typ));
     return expTy(NULL, Ty_Void());
   }
 
@@ -182,13 +182,13 @@ struct expty transExp_ifExp(S_table venv, S_table tenv, A_exp a) {
   if (a->u.iff.elsee) {
     struct expty elsee = transExp(venv, tenv, a->u.iff.elsee);
     if (!has_same_ty(then.ty, elsee.ty))
-      EM_error(a->u.iff.elsee->pos, "incompatible types ('%s' and '%s')",
+      EM_error(a->u.iff.elsee->pos, "types of then - else differ ('%s' and '%s')",
                type_msg(then.ty), type_msg(elsee.ty));
     return expTy(NULL, then.ty);
   }
 
   if (then.ty->kind != Ty_void)
-    EM_error(a->u.iff.then->pos, "this exp must produce no value");
+    EM_error(a->u.iff.then->pos, "if-then returns non unit");
 
   return expTy(NULL, Ty_Void());
 }
@@ -200,7 +200,7 @@ struct expty transExp_whileExp(S_table venv, S_table tenv, A_exp a) {
   if (test.ty->kind != Ty_int)
     EM_error(a->u.whilee.test->pos, "expected unqualified-id");
   if (body.ty->kind != Ty_void)
-    EM_error(a->u.whilee.test->pos, "this exp must produce no value");
+    EM_error(a->u.whilee.test->pos, "body of while not unit");
 
   return expTy(NULL, Ty_Void());
 }
@@ -210,14 +210,14 @@ struct expty transExp_forExp(S_table venv, S_table tenv, A_exp a) {
   struct expty hi = transExp(venv, tenv, a->u.forr.hi);
 
   if (lo.ty->kind != Ty_int || hi.ty->kind != Ty_int)
-    EM_error(a->u.forr.lo->pos, "integer type required");
+    EM_error(a->u.forr.lo->pos, "hi expr is not int");
 
   S_beginScope(venv);
   transDec(venv, tenv,
            A_VarDec(a->pos, a->u.forr.var, S_Symbol("int"), a->u.forr.lo));
   struct expty body = transExp(venv, tenv, a->u.forr.body);
   if (body.ty->kind != Ty_void)
-    EM_error(a->u.forr.body->pos, "this exp must produce no value");
+    EM_error(a->u.forr.body->pos, "body of for returns non unit");
   S_endScope(venv);
 
   return expTy(NULL, Ty_Void());
@@ -242,7 +242,7 @@ struct expty transExp_arrayExp(S_table venv, S_table tenv, A_exp a) {
   struct expty init = transExp(venv, tenv, a->u.array.init);
 
   if (!typ || typ->kind != Ty_array) {
-    EM_error(a->pos, "array type %s mismatched", S_name(a->u.array.typ));
+    EM_error(a->pos, "array type '%s' mismatched", S_name(a->u.array.typ));
     return expTy(NULL, Ty_Void());
   }
 
@@ -281,7 +281,7 @@ struct expty transVar_simpleVar(S_table venv, S_table tenv, A_var v) {
   E_enventry x = S_look(venv, v->u.simple);
 
   if (!x || x->kind != E_varEntry) {
-    EM_error(v->pos, "undeclared variable %s", S_name(v->u.simple));
+    EM_error(v->pos, "undeclared variable '%s'", S_name(v->u.simple));
     return expTy(NULL, Ty_Int());
   }
 
@@ -298,7 +298,7 @@ struct expty transVar_fieldVar(S_table venv, S_table tenv, A_var v) {
   for (fields = var.ty->u.record; fields != NULL; fields = fields->tail)
     if (fields->head->name == v->u.field.sym) break;
   if (!fields) {
-    EM_error(v->pos, "undefined record field %s", S_name(v->u.field.sym));
+    EM_error(v->pos, "field '%s' not defined in record type", S_name(v->u.field.sym));
     return expTy(NULL, Ty_Int());
   }
   return expTy(NULL, actual_ty(fields->head->ty));
@@ -393,9 +393,14 @@ void transDec_functionDec(S_table venv, S_table tenv, A_dec d) {
 
       // check return type
       struct expty body = transExp(venv, tenv, fundecs->head->body);
-      if (!has_same_ty(result, body.ty))
-        EM_error(fundecs->head->pos, "return type mismatched (%s and %s)",
-                 type_msg(result), type_msg(body.ty));
+      if (!has_same_ty(result, body.ty)) {
+        if (has_same_ty(result, Ty_Void()))
+          EM_error(fundecs->head->pos, "procedure returns value '%s'",
+                  type_msg(body.ty));
+        else
+          EM_error(fundecs->head->pos, "return type mismatched '%s' and '%s')",
+                  type_msg(result), type_msg(body.ty));
+      }
     }
     S_endScope(venv);
   }
@@ -420,7 +425,7 @@ void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
   for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
     Ty_ty type = S_look(tenv, decs->head->name);
     if (type->u.name.sym == actual_ty(type)->u.name.sym) {
-      EM_error(decs->head->ty->pos, "invalid recursive type declaration");
+      EM_error(decs->head->ty->pos, "mutually recursive types declaration");
       type->u.name.ty = Ty_Int();
     }
   }
@@ -439,7 +444,7 @@ Ty_ty transTy(S_table tenv, A_ty a) {
            afields = afields->tail) {
         Ty_ty typ = S_look(tenv, afields->head->typ);
         if (!typ) {
-          EM_error(afields->head->pos, "type %s mismatched",
+          EM_error(afields->head->pos, "type '%s' mismatched",
                    S_name(afields->head->name));
           typ = Ty_Int();
         }
@@ -460,8 +465,8 @@ Ty_ty actual_ty(Ty_ty ty) {
   if (ty->kind != Ty_name) return ty;
 
   Ty_ty p = ty->u.name.ty;
-  for (; p->kind == Ty_name; p = p->u.name.ty)
-    if (p->u.name.sym == ty->u.name.sym) break;
+  for (; p && p->kind == Ty_name; p = p->u.name.ty)
+    if (p == ty) break;
   return p;
 }
 
