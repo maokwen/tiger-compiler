@@ -7,3 +7,4 @@ y.tab.h
 lextest
 .vscode/
 testoutput/
+.DS_Store
