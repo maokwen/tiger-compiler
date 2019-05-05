@@ -333,11 +333,14 @@ void transDec_typeDec(S_table venv, S_table tenv, A_dec d);
 void transDec(S_table venv, S_table tenv, A_dec d) {
   switch (d->kind) {
     case A_varDec:
-      return transDec_varDec(venv, tenv, d);
+      transDec_varDec(venv, tenv, d);
+      break;
     case A_functionDec:
       transDec_functionDec(venv, tenv, d);
+      break;
     case A_typeDec:
       transDec_typeDec(venv, tenv, d);
+      break;
   }
 }
 
@@ -413,8 +416,8 @@ void transDec_typeDec(S_table venv, S_table tenv, A_dec d) {
     for (A_nametyList ds = d->u.type; ds != decs; ds = ds->tail)
       if (ds->head->name == name)
         EM_error(d->pos,
-                 "there are two types with the same name in the same "
-                 "(consecutive) batch of mutually recursive types");
+                 "there are two types with the same name in the same batch of "
+                 "mutually recursive types");
 
     S_enter(tenv, name, Ty_Name(name, NULL));
   }
