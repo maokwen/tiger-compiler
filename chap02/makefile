@@ -24,4 +24,4 @@ all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.ti
 test: $(all-tests)
 
 %.test: ../testcases/%.tig
-	./a.out $< > ../testoutput/$@
+	./a.out $< > testoutput/$@

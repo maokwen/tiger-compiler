@@ -1,5 +1,5 @@
-a.out: semanttest.o y.tab.o lex.yy.o errormsg.o symbol.o absyn.o  env.o types.o semant.o table.o util.o
-	cc -g semanttest.o y.tab.o lex.yy.o errormsg.o symbol.o absyn.o  env.o types.o semant.o table.o util.o
+a.out: semanttest.o y.tab.o lex.yy.o errormsg.o symbol.o absyn.o env.o types.o semant.o table.o util.o
+	cc -g semanttest.o y.tab.o lex.yy.o errormsg.o symbol.o absyn.o env.o types.o semant.o table.o util.o
 
 semanttest.o: semanttest.c semanttest.h
 	cc -g -c semanttest.c
@@ -44,7 +44,7 @@ util.o: util.c util.h
 	cc -g -c util.c
 
 clean: 
-	rm -f a.out util.o semanttest.o lex.yy.o errormsg.o y.tab.c y.tab.h y.tab.o prabsyn.o symbol.o table.o absyn.o lex.yy.c y.output semant.o types.o env.o
+	rm -f a.out util.o semanttest.o lex.yy.o errormsg.o y.tab.c y.tab.h y.tab.o symbol.o table.o absyn.o lex.yy.c y.output semant.o types.o env.o
 
 all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
 
@@ -54,6 +54,6 @@ test49.test:
 	@echo "Skip test49.tig"
 
 %.test: ../testcases/%.tig
-	./a.out $< > ../testoutput/$@ 2>&1
-	echo "==============================" >> ../testoutput/$@
-	cat $< >> ../testoutput/$@
+	./a.out $< > testoutput/$@ 2>&1
+	echo "==============================" >> testoutput/$@
+	cat $< >> testoutput/$@

@@ -6,5 +6,5 @@ y.tab.h
 *.output
 lextest
 .vscode/
-testoutput/
+**/testoutput
 .DS_Store

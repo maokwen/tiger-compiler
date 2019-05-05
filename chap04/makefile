@@ -48,4 +48,4 @@ test49.test:
 	@echo "Skip test49.tig"
 
 %.test: ../testcases/%.tig
-	./a.out $< > ../testoutput/$@
+	./a.out $< > testoutput/$@
