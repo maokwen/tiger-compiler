@@ -55,3 +55,5 @@ test49.test:
 
 %.test: ../testcases/%.tig
 	./a.out $< > ../testoutput/$@ 2>&1
+	echo "==============================" >> ../testoutput/$@
+	cat $< >> ../testoutput/$@
