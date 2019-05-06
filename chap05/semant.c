@@ -1,4 +1,5 @@
-#include <stdio.h>  // for NULL
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "util.h"
 #include "errormsg.h"
@@ -138,8 +139,9 @@ struct expty transExp_recordExp(S_table venv, S_table tenv, A_exp a) {
   while (efields && fields) {
     struct expty efield = transExp(venv, tenv, efields->head->exp);
     pos = efields->head->exp->pos;
-    if (has_same_ty(fields->head->ty, efield.ty)) {
-      EM_error(pos, "record type mismatched");
+    if (!has_same_ty(fields->head->ty, efield.ty)) {
+      EM_error(pos, "record field type mismatched: '%s' and '%s'",
+               type_msg(fields->head->ty), type_msg(efield.ty));
       break;
     }
     efields = efields->tail;
@@ -440,20 +442,20 @@ Ty_ty transTy(S_table tenv, A_ty a) {
       return Ty_Name(a->u.name, S_look(tenv, a->u.name));
     }
     case A_recordTy: {
-      Ty_fieldList fields, tail = NULL;
-      A_fieldList afields = a->u.record;
-
-      for (A_fieldList afields = a->u.record; afields;
-           afields = afields->tail) {
-        Ty_ty typ = S_look(tenv, afields->head->typ);
+      Ty_fieldList h = Ty_FieldList(NULL, NULL), p = h, fields;
+      for (A_fieldList efields = a->u.record; efields;
+           efields = efields->tail) {
+        Ty_ty typ = S_look(tenv, efields->head->typ);
         if (!typ) {
-          EM_error(afields->head->pos, "type '%s' mismatched",
-                   S_name(afields->head->name));
+          EM_error(efields->head->pos, "type '%s' undefined",
+                   S_name(efields->head->name));
           typ = Ty_Int();
         }
-        fields = Ty_FieldList(Ty_Field(afields->head->name, typ), tail);
-        tail = fields;
+        p->tail = Ty_FieldList(Ty_Field(efields->head->name, typ), NULL);
+        p = p->tail;
       }
+      fields = h->tail;
+      free(h);
 
       return Ty_Record(fields);
     }
