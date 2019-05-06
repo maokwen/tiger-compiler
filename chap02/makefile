@@ -17,7 +17,7 @@ util.o: util.c util.h
 	cc -g -c util.c
 
 clean: 
-	rm -f a.out util.o driver.o lex.yy.o lex.yy.c errormsg.o
+	rm -f a.out *.o lex.yy.*
 
 all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
 

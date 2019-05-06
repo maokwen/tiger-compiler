@@ -22,7 +22,7 @@ x86_64frame.o: frame.h x86_64frame.c
 	cc -g -c x86_64frame.c
 
 clean: 
-	rm -f a.out y.tab.* lex.yy.c y.output *.o
+	rm -f a.out *.o y.tab.* lex.yy.c y.output
 
 all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.tig))))
 

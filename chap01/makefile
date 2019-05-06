@@ -14,4 +14,4 @@ util.o: util.c util.h
 	cc -g -c util.c
 
 clean: 
-	rm -f a.out util.o prog1.o slp.o main.o
+	rm -f a.out *.o
