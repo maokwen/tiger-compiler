@@ -2,7 +2,6 @@
 
 typedef char *string;
 typedef char bool;
-typedef char bool1;
 
 #define TRUE 1
 #define FALSE 0
