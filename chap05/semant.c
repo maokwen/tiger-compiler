@@ -114,9 +114,9 @@ struct expty transExp_opExp(S_table venv, S_table tenv, A_exp a) {
   }
 
   if (oper == A_eqOp || oper == A_neqOp) {
-    if (left.ty->kind != right.ty->kind ||
-        (left.ty->kind == Ty_nil && right.ty->kind == Ty_record) ||
-        (left.ty->kind == Ty_record && right.ty->kind == Ty_nil))
+    if (left.ty->kind != right.ty->kind &&
+        !(left.ty->kind == Ty_nil && right.ty->kind == Ty_record) &&
+        !(left.ty->kind == Ty_record && right.ty->kind == Ty_nil))
       EM_error(a->u.op.right->pos, "same type required");
   }
 
