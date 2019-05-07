@@ -215,7 +215,7 @@ struct expty transExp_forExp(Tr_level level, S_table venv, S_table tenv, A_exp a
   struct expty hi = transExp(level, venv, tenv, a->u.forr.hi);
 
   if (lo.ty->kind != Ty_int || hi.ty->kind != Ty_int)
-    EM_error(a->u.forr.lo->pos, "hi expr is not int");
+    EM_error(a->u.forr.lo->pos, "lo or hi expr is not int");
 
   S_beginScope(venv);
   transDec(level, venv, tenv,
