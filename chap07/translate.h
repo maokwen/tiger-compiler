@@ -13,4 +13,4 @@ Tr_level Tr_newLevel(Tr_level parent, Temp_label name, U_boolList formals);
 Tr_accessList Tr_formals(Tr_level level);
 Tr_access Tr_allocLocal(Tr_level level, bool escape);
 
-typedef void *Tr_exp;
+typedef struct Tr_exp_ *Tr_exp;
