@@ -19,3 +19,7 @@ Tr_exp Tr_nilExp();
 Tr_exp Tr_intExp(int);
 Tr_exp Tr_stringExp(string);
 
+Tr_exp Tr_simpleVar(Tr_access, Tr_level);
+Tr_exp Tr_fieldVar(Tr_exp, int, Tr_level);
+Tr_exp Tr_subscriptVar(Tr_exp, Tr_exp, Tr_level);
+

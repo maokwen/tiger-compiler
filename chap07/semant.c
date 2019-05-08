@@ -290,7 +290,8 @@ struct expty transVar_simpleVar(Tr_level level, S_table venv, S_table tenv, A_va
     return expTy(NULL, Ty_Int());
   }
 
-  return expTy(NULL, actual_ty(x->u.var.ty));
+  return expTy(Tr_simpleVar(x->u.var.access, level),
+               actual_ty(x->u.var.ty));
 }
 
 struct expty transVar_fieldVar(Tr_level level, S_table venv, S_table tenv, A_var v) {
@@ -299,14 +300,16 @@ struct expty transVar_fieldVar(Tr_level level, S_table venv, S_table tenv, A_var
   if (var.ty->kind != Ty_record)
     EM_error(v->pos, "invalid types '%s' for record field", type_msg(var.ty));
 
+  int index = 0;
   Ty_fieldList fields;
-  for (fields = var.ty->u.record; fields != NULL; fields = fields->tail)
+  for (fields = var.ty->u.record; fields != NULL; fields = fields->tail, index += 1)
     if (fields->head->name == v->u.field.sym) break;
   if (!fields) {
     EM_error(v->pos, "field '%s' not defined in record type", S_name(v->u.field.sym));
     return expTy(NULL, Ty_Int());
   }
-  return expTy(NULL, actual_ty(fields->head->ty));
+  return expTy(Tr_fieldVar(var.exp, index, level),
+               actual_ty(fields->head->ty));
 }
 
 struct expty transVar_subscriptVar(Tr_level level, S_table venv, S_table tenv, A_var v) {
@@ -324,7 +327,8 @@ struct expty transVar_subscriptVar(Tr_level level, S_table venv, S_table tenv, A
     return expTy(NULL, Ty_Int());
   }
 
-  return expTy(NULL, actual_ty(var.ty->u.array));
+  return expTy(Tr_subscriptVar(var.exp, sub.exp, level),
+               actual_ty(var.ty->u.array));
 }
 
 /**

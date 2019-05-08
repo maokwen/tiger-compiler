@@ -183,3 +183,34 @@ Tr_exp Tr_intExp(int i) {
 Tr_exp Tr_stringExp(string s) {
   // todo
 }
+
+Tr_exp Tr_simpleVar(Tr_access acc, Tr_level lev) {
+  /*
+   * MEM(+(CONST kn, MEM(+(CONST kn-1, ...
+   *                   MEM(+(CONST k1, TEMP FP)) ... ))))
+   */
+  if (acc->level == lev) return Tr_Ex(F_Exp(acc->access, T_Temp(F_FP())));
+
+  Tr_access static_link_offset = Tr_formals(lev)->head;
+  return Tr_Ex(F_Exp(static_link_offset, unEx(Tr_simpleVar(acc, lev->parent))));
+}
+Tr_exp Tr_fieldVar(Tr_exp var, int index, Tr_level lev) {
+  /*
+   * MEM(+(var, *(index, CONST wordsize)))
+   */
+  return Tr_Ex(T_Mem(
+                T_Binop(T_plus, unEx(var),
+                                T_Binop(T_mul, T_Const(index),
+                                               T_Const(F_wordSize)))));
+}
+Tr_exp Tr_subscriptVar(Tr_exp var, Tr_exp sub, Tr_level lev) {
+  /*
+   * MEM(+(var, *(sub, CONST wordsize)))
+   */
+  // todo: check index out of bounds
+  return Tr_Ex(T_Mem(
+                T_Binop(T_plus, unEx(var),
+                                T_Binop(T_mul, unEx(sub), 
+                                               T_Const(F_wordSize)))));
+}
+
