@@ -3,6 +3,7 @@
 #include "util.h"
 #include "symbol.h"
 #include "temp.h"
+#include "tree.h"
 #include "frame.h"
 
 struct F_frame_ {
@@ -78,3 +79,16 @@ F_accessList F_AccessList(F_access h, F_accessList t) {
   p->tail = t;
   return p;
 };
+
+Temp_temp F_FP() {
+  static Temp_temp fp = NULL;
+  if (!fp) fp = Temp_newtemp();
+  return fp;
+}
+
+T_exp F_Exp(F_access acc, T_exp framePtr) {
+  if (acc->kind == inFrame)
+    return T_Mem(T_Binop(T_plus, T_Const(acc->u.offset), framePtr));
+  else
+    return T_Temp(acc->u.reg);
+}
