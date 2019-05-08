@@ -43,11 +43,11 @@ struct expty transExp(Tr_level level, S_table venv, S_table tenv, A_exp a) {
     case A_varExp:
       return transVar(level, venv, tenv, a->u.var);
     case A_nilExp:
-      return expTy(NULL, Ty_Nil());
+      return expTy(Tr_nilExp(), Ty_Nil());
     case A_intExp:
-      return expTy(NULL, Ty_Int());
+      return expTy(Tr_intExp(a->u.intt), Ty_Int());
     case A_stringExp:
-      return expTy(NULL, Ty_String());
+      return expTy(Tr_stringExp(a->u.stringg), Ty_String());
     case A_callExp:
       return transExp_callExp(level, venv, tenv, a);
     case A_opExp:

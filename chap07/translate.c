@@ -173,3 +173,13 @@ static struct Cx unCx(Tr_exp e) {
   }
   assert(0);
 }
+
+Tr_exp Tr_nilExp() {
+  Tr_Ex(T_Const(0));
+}
+Tr_exp Tr_intExp(int i) {
+  Tr_Ex(T_Const(i));
+}
+Tr_exp Tr_stringExp(string s) {
+  // todo
+}

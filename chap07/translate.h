@@ -14,3 +14,8 @@ Tr_accessList Tr_formals(Tr_level level);
 Tr_access Tr_allocLocal(Tr_level level, bool escape);
 
 typedef struct Tr_exp_ *Tr_exp;
+
+Tr_exp Tr_nilExp();
+Tr_exp Tr_intExp(int);
+Tr_exp Tr_stringExp(string);
+
