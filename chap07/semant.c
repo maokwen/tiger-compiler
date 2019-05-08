@@ -311,16 +311,16 @@ struct expty transVar_fieldVar(Tr_level level, S_table venv, S_table tenv, A_var
 
 struct expty transVar_subscriptVar(Tr_level level, S_table venv, S_table tenv, A_var v) {
   struct expty var = transVar(level, venv, tenv, v->u.subscript.var);
-  struct expty exp = transExp(level, venv, tenv, v->u.subscript.exp);
+  struct expty sub = transExp(level, venv, tenv, v->u.subscript.exp);
 
   if (var.ty->kind != Ty_array) {
     EM_error(v->u.subscript.var->pos, "variable type '%s' is not array",
              type_msg(var.ty));
     return expTy(NULL, Ty_Int());
   }
-  if (exp.ty->kind != Ty_int) {
+  if (sub.ty->kind != Ty_int) {
     EM_error(v->u.subscript.exp->pos, "invalid types '%s' for array subscript",
-             type_msg(exp.ty));
+             type_msg(sub.ty));
     return expTy(NULL, Ty_Int());
   }
 
