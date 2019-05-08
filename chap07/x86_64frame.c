@@ -7,7 +7,7 @@
 
 struct F_frame_ {
   Temp_label label;
-  F_accessList formals;
+  F_accessList formals; // static link as first formal argc
   F_accessList locals;
 };
 
@@ -20,7 +20,7 @@ struct F_access_ {
 };
 
 static const int regNum = 6;
-static const int ofst = 8;  // offset
+static const int F_wordSize = 8;
 
 static F_access InFrame(int offset);
 static F_access InReg(Temp_temp reg);
@@ -32,7 +32,7 @@ F_access F_allocLocal(F_frame f, bool escape) {
   int offset = 0;
   F_accessList tail;
   for (F_accessList locals = f->locals; locals; locals = locals->tail)
-    if (locals->head->kind == inFrame) offset -= ofst;
+    if (locals->head->kind == inFrame) offset -= F_wordSize;
 
   F_access l = (escape) ? InFrame(offset) : InReg(Temp_newtemp());
   f->locals = F_AccessList(l, f->locals);
@@ -42,18 +42,19 @@ F_access F_allocLocal(F_frame f, bool escape) {
 F_frame F_newFrame(Temp_label label, U_boolList escape) {
   F_frame f = (F_frame)checked_malloc(sizeof(*f));
   f->label = label;
-  f->formals = NULL;
-
   int offset = 0;
   int reg = 0;
 
+  F_accessList h = F_AccessList(NULL, NULL), p = h;
   for (; escape; escape = escape->tail) {
     if (escape->head == TRUE || reg >= regNum) {
-      f->formals = F_AccessList(InFrame(offset += ofst), f->formals);
+      p->tail = F_AccessList(InFrame(offset += F_wordSize), p);
     } else {
-      f->formals = F_AccessList(InReg(Temp_newtemp()), f->formals);
+      p->tail = F_AccessList(InReg(Temp_newtemp()), p);
     }
+    p = p->tail;
   }
+  f->formals = h->tail; free(h);
   return f;
 }
 

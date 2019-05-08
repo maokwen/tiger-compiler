@@ -4,6 +4,7 @@
 #include "symbol.h"
 #include "temp.h"
 #include "frame.h"
+#include "tree.h"
 #include "translate.h"
 
 struct Tr_level_ { Tr_level parent; F_frame frame; };
@@ -27,7 +28,7 @@ Tr_level Tr_outermost(void) {
 Tr_level Tr_newLevel(Tr_level parent, Temp_label name, U_boolList formals) {
   Tr_level lev = checked_malloc(sizeof(*lev));
   lev->parent = parent;
-  lev->frame = F_newFrame(name, formals);
+  lev->frame = F_newFrame(name, U_BoolList(TRUE, formals));
   return lev;
 }
 

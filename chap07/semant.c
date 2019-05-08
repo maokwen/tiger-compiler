@@ -364,7 +364,7 @@ void transDec_varDec(Tr_level level, S_table venv, S_table tenv, A_dec d) {
     EM_error(d->u.var.init->pos,
              "cannot initialize a nil type without specified record type");
 
-  S_enter(venv, d->u.var.var, E_VarEntry(init.ty));
+  S_enter(venv, d->u.var.var, E_VarEntry(Tr_allocLocal(level, TRUE), init.ty)); // todo check escape = false
 }
 
 void transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d) {
@@ -395,13 +395,17 @@ void transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d) {
     E_enventry x = S_look(venv, name);
     Ty_tyList formals = x->u.fun.formals;
     Ty_ty result = x->u.fun.result;
+    Tr_level lev = x->u.fun.level;
 
     S_beginScope(venv);
     {
       A_fieldList l;
       Ty_tyList t;
-      for (l = fundecs->head->params, t = formals; l; l = l->tail, t = t->tail)
-        S_enter(venv, l->head->name, E_VarEntry(t->head));
+      Tr_accessList a;
+      for (l = fundecs->head->params, t = formals, a = Tr_formals(lev);
+           l;
+           l = l->tail, t = t->tail, a = a->tail)
+        S_enter(venv, l->head->name, E_VarEntry(a->head, t->head));
 
       // check return type
       struct expty body = transExp(level, venv, tenv, fundecs->head->body);
