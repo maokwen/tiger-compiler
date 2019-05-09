@@ -14,6 +14,9 @@ Tr_accessList Tr_formals(Tr_level level);
 Tr_access Tr_allocLocal(Tr_level level, bool escape);
 
 typedef struct Tr_exp_ *Tr_exp;
+typedef struct Tr_expList_ *Tr_expList;
+struct Tr_expList_ { Tr_exp head; Tr_expList tail; };
+Tr_expList Tr_ExpList(Tr_exp head, Tr_expList tail);
 
 Tr_exp Tr_nilExp();
 Tr_exp Tr_intExp(int);
@@ -36,6 +39,9 @@ Tr_exp Tr_neqExp(Tr_exp, Tr_exp);
 
 Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
 Tr_exp Tr_ifExp_noValue(Tr_exp, Tr_exp, Tr_exp);
+
+Tr_exp Tr_recordExp(Tr_expList fields, int size);
+Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init);
 
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
 F_fragList Tr_getResult(void);

@@ -152,6 +152,8 @@ struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_ex
   // check exp field type
   A_efieldList efields = a->u.record.fields;
   Ty_fieldList fields = typ->u.record;
+  Tr_expList expl_h = Tr_ExpList(NULL, NULL), expl_p = expl_h;
+  int size = 0;
   while (efields && fields) {
     struct expty efield = transExp(level, venv, tenv, efields->head->exp);
     pos = efields->head->exp->pos;
@@ -162,10 +164,14 @@ struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_ex
     }
     efields = efields->tail;
     fields = fields->tail;
+    expl_p->tail = r_ExpList(efield.exp, NULL);
+    size += 1;
   }
   if (efields || fields) EM_error(pos, "record type mismatched");
 
-  return expTy(NULL, S_look(tenv, a->u.record.typ));
+  expl_p = expl_h->tail;
+  free(expl_h);
+  return expTy(Tr_recordExp(expl_p, size), S_look(tenv, a->u.record.typ));
 }
 
 struct expty transExp_seqExp(Tr_level level, S_table venv, S_table tenv, A_exp a) {
@@ -276,7 +282,7 @@ struct expty transExp_arrayExp(Tr_level level, S_table venv, S_table tenv, A_exp
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
         type_msg(typ), type_msg(init.ty));
 
-  return expTy(NULL, S_look(tenv, a->u.array.typ));
+  return expTy(Tr_arrayExp(size.exp, init.exp), S_look(tenv, a->u.array.typ));
 }
 
 /**

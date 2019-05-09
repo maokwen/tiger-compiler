@@ -98,6 +98,12 @@ patchList joinPatch(patchList first, patchList second) {
   return first;
 }
 
+Tr_expList Tr_ExpList(Tr_exp h, Tr_expList t) {
+  Tr_expList p = (Tr_expList)checked_malloc(sizeof(*p));
+  p->head = h; p->tail = t;
+  return p;
+}
+
 static Tr_exp Tr_Ex(T_exp ex) {
   Tr_exp p = (Tr_exp)checked_malloc(sizeof(*p));
   p->kind = Tr_ex; p->u.ex = ex;
@@ -292,6 +298,31 @@ Tr_exp Tr_ifExp_noValue(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
                T_Seq(T_Label(f),
                T_Seq(unUx(e3),
                      T_Label(z))))))));
+}
+
+Tr_exp Tr_recordExp(Tr_expList fields, int size) {
+  int size;
+  Temp_temp r = Temp_newtemp();
+  T_stm acc =
+      T_Seq(T_Move(T_Temp(r),
+                   F_externalCall("malloc", //todo:malloc
+                                  T_ExpList(T_Const(size * F_wordSize), NULL))),
+            NULL);
+
+  T_stm p = acc;
+  for (int offset = 0; fields; fields = fields->tail, offset += 1) {
+    T_stm s =
+        T_Move(T_Mem(T_BinOp(T_plus, T_Temp(r), T_Const(offset * F_wordSize))),
+               fields->head);
+    if (!(fields->tail)) acc->u.SEQ.right = s;
+    else acc->u.SEQ.right = T_Seq(s, NULL);
+  }
+
+  return T_Eseq(acc, T_Temp(r));
+}
+Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init) {
+  return T_Call(T_Name(Temp_namedlabel("initArray")), //todo:initArray
+                T_ExpList(size, T_ExpList(init, NULL)));
 }
 
 static F_fragList fragList = NULL;

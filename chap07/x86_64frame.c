@@ -110,3 +110,7 @@ F_fragList F_FragList(F_frag head, F_fragList tail) {
   l->head = head; l->tail = tail;
   return l;
 }
+
+T_exp F_externalCall(string s, T_expList args) {
+  return T_Call(T_Name(Temp_namedlabel(s)), args);
+}

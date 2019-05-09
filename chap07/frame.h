@@ -32,3 +32,5 @@ F_frag F_ProcFrag(T_stm body, F_frame frame);
 typedef struct F_fragList_ *F_fragList;
 struct F_fragList_ {F_frag head; F_fragList tail;};
 F_fragList F_FragList(F_frag head, F_fragList tail);
+
+T_exp F_externalCall(string s, T_expList args);
