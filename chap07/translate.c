@@ -159,7 +159,7 @@ static T_stm unNx(Tr_exp e) {
 }
 static struct Cx unCx(Tr_exp e) {
   switch (e->kind) {
-    case Tr_ex: // if-then-else exp
+    case Tr_ex: // if(x)
       T_stm stm = T_Cjump(T_ne, unEx(e), T_Const(0), NULL, NULL);
       patchList trues  = PatchList(&stm->u.CJUMP.true,  NULL);
       patchList falses = PatchList(&stm->u.CJUMP.false, NULL);
@@ -198,6 +198,7 @@ Tr_exp Tr_fieldVar(Tr_exp var, int index, Tr_level lev) {
   /*
    * MEM(+(var, *(index, CONST wordsize)))
    */
+  // todo: check access to nil
   return Tr_Ex(T_Mem(
                 T_Binop(T_plus, unEx(var),
                                 T_Binop(T_mul, T_Const(index),
