@@ -256,3 +256,37 @@ Tr_exp Tr_eqExp(Tr_exp l, Tr_exp r) {
 Tr_exp Tr_neqExp(Tr_exp l, Tr_exp r) {
   Tr_logicalOpExp(l, r, T_ne);
 }
+
+Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
+  Temp_label t = Temp_newlabel(), f = Temp_newlabel(), z = Temp_newlabel();
+  Temp_label r = Temp_newlabel();
+  doPatch(e1->u.cx.trues, t);
+  doPatch(e1->u.cx.trues, f);
+  return Tr_Ex(T_Eseq(UnEx(e1),
+               T_Eseq(T_Label(t),
+               T_Eseq(T_Move(r, unEx(e2)),
+               T_Eseq(T_Jump(z, Temp_LabelList(z, NULL)),
+               T_Eseq(T_Label(f),
+               T_Eseq(T_Move(r, unEx(e3)),
+               T_Eseq(T_Label(z),
+                      T_Temp(r)))))))));
+}
+Tr_exp Tr_ifExp_noValue(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
+  Temp_label t = Temp_newlabel(), f = Temp_newlabel();
+  doPatch(e1->u.cx.trues, t);
+  doPatch(e1->u.cx.trues, f);
+  if (!e3) {
+    return Tr_Ex(T_Seq(UnEx(e1),
+                 T_Seq(T_Label(t),
+                 T_Seq(unNx(e2),
+                 T_Label(f)))));
+  }
+  Temp_label z = Temp_newlabel();
+  return Tr_Ex(T_Seq(UnEx(e1),
+               T_Seq(T_Label(t),
+               T_Seq(unNx(e2),
+               T_Seq(T_Jump(z, Temp_LabelList(z, NULL)),
+               T_Seq(T_Label(f),
+               T_Seq(unUx(e3),
+                     T_Label(z))))))));
+}

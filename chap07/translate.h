@@ -33,3 +33,6 @@ Tr_exp Tr_gtOpExp(Tr_exp, Tr_exp);
 Tr_exp Tr_geOpExp(Tr_exp, Tr_exp);
 Tr_exp Tr_eqExp(Tr_exp, Tr_exp);
 Tr_exp Tr_neqExp(Tr_exp, Tr_exp);
+
+Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
+Tr_exp Tr_ifExp_noValue(Tr_exp, Tr_exp, Tr_exp);

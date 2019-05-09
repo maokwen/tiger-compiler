@@ -202,12 +202,15 @@ struct expty transExp_ifExp(Tr_level level, S_table venv, S_table tenv, A_exp a)
     if (!has_same_ty(then.ty, elsee.ty))
       EM_error(a->u.iff.elsee->pos, "types of then - else differ ('%s' and '%s')",
                type_msg(then.ty), type_msg(elsee.ty));
-    return expTy(NULL, then.ty);
+    if (then.ty == Ty_Void())
+       return expTy(Tr_ifExp_noValue(test.exp, then.exp, elsee.exp), Ty_Void());
+    return expTy(Tr_ifExp(test.exp, then.exp, elsee.exp), then.ty);
   }
 
   if (then.ty->kind != Ty_void)
     EM_error(a->u.iff.then->pos, "if-then returns non unit");
 
+  return expTy(Tr_ifExp_noValue(test.exp, then.exp, NULL), then.ty);
   return expTy(NULL, Ty_Void());
 }
 
