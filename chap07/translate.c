@@ -181,7 +181,10 @@ Tr_exp Tr_intExp(int i) {
   Tr_Ex(T_Const(i));
 }
 Tr_exp Tr_stringExp(string s) {
-  // todo
+  Temp_label lab = Temp_newlabel();
+  F_frag frag = F_StringFrag(lab, s);
+  fragList = F_FragList(frag, fragList);
+  return Tr_Ex(T_Name(lab));
 }
 
 Tr_exp Tr_simpleVar(Tr_access acc, Tr_level lev) {
