@@ -123,6 +123,19 @@ struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a)
       EM_error(a->u.op.right->pos, "same type required");
   }
 
+  switch (oper) {
+    case A_plusOp:    Tr_addOpExp(   left.exp, right.exp);
+    case A_minusOp:   Tr_minusOpExp( left.exp, right.exp);
+    case A_timesOp:   Tr_timespExp(  left.exp, right.exp);
+    case A_divideOp:  Tr_divideOpExp(left.exp, right.exp);
+    case A_ltOp:      Tr_ltOpExp(    left.exp, right.exp);
+    case A_leOp:      Tr_leOpExp(    left.exp, right.exp);
+    case A_gtOp:      Tr_gtOpExp(    left.exp, right.exp);
+    case A_geOp:      Tr_geOpExp(    left.exp, right.exp);
+    case A_eqOp:      Tr_eqExp(      left.exp, right.exp);
+    case A_neqOp:     Tr_neqExp(     left.exp, right.exp);
+  }
+
   return expTy(NULL, Ty_Int());
 }
 
