@@ -318,11 +318,11 @@ Tr_exp Tr_recordExp(Tr_expList fields, int size) {
     else acc->u.SEQ.right = T_Seq(s, NULL);
   }
 
-  return T_Eseq(acc, T_Temp(r));
+  return T_Ex(T_Eseq(acc, T_Temp(r)));
 }
 Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init) {
-  return T_Call(T_Name(Temp_namedlabel("initArray")), //todo:initArray
-                T_ExpList(size, T_ExpList(init, NULL)));
+  return T_Ex(T_Call(T_Name(Temp_namedlabel("initArray")), //todo:initArray
+                T_ExpList(size, T_ExpList(init, NULL))));
 }
 
 Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body, Temp_label done) {
