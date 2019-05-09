@@ -325,9 +325,8 @@ Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init) {
                 T_ExpList(size, T_ExpList(init, NULL)));
 }
 
-Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body) {
+Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body, Temp_label done) {
   Temp_label test = Temp_newlabel();
-  Temp_label done = Temp_newlabel();
   Temp_label loop = Temp_newlabel();
 
   return Tr_Nx(T_Seq(T_Label(test),
@@ -338,7 +337,9 @@ Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body) {
                      T_Label(done)))))));
 }
 
-Tr_exp Tr_breakExp(Temp_label breakk); //todo
+Tr_exp Tr_breakExp(Temp_label done) {
+  return Tr_Nx(T_Jump(T_Name(done), Temp_LabelList(done, NULL)));
+}
 
 static F_fragList fragList = NULL;
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals); //todo
