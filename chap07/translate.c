@@ -341,6 +341,25 @@ Tr_exp Tr_breakExp(Temp_label done) {
   return Tr_Nx(T_Jump(T_Name(done), Temp_LabelList(done, NULL)));
 }
 
+Tr_exp Tr_callExp(Temp_label name, Tr_expList args, bool returnn, Tr_level cur, Tr_level lev) {
+  T_expList h = T_ExpList(NULL, NULL), p = h, r;
+  for (; args; args = args->tail) {
+    p->tail = T_ExpList(unEx(args->head), NULL);
+    p = p->tail;
+  }
+
+  T_exp argss = T_Temp(F_FP());
+	while (cur != lev->parent) {
+		argss = F_Exp(F_formals(cur->frame)->head, argss);
+		cur = cur->parent;
+	}
+  h->head = Tr_Nx(argss);
+
+  if (returnn) return Tr_Ex(T_Call(T_Name(name), argss));
+  return Tr_Nx(T_Call(T_Name(name), args));
+
+}
+
 static F_fragList fragList = NULL;
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals); //todo
 F_fragList Tr_getResult() {

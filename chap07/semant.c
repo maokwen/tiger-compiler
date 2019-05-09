@@ -72,6 +72,7 @@ struct expty transExp_callExp(Tr_level level, S_table venv, S_table tenv, A_exp 
   // check every arglist type
   A_expList args = a->u.call.args;
   Ty_tyList formals = x->u.fun.formals;
+  Tr_expList h = Tr_ExpList(NULL, NULL), p = h, argsList;
   while (args && formals) {
     struct expty arg = transExp(level, venv, tenv, args->head, breakk);
     pos = args->head->pos;
@@ -79,12 +80,21 @@ struct expty transExp_callExp(Tr_level level, S_table venv, S_table tenv, A_exp 
       EM_error(args->head->pos, "formals and actuals have different types");
       break;
     }
+    p->tail = Tr_ExpList(arg.exp, NULL);
+    p = p->tail;
     args = args->tail;
     formals = formals->tail;
   }
+  argsList = h->tail;
+  free(h);
   if (args || formals) EM_error(pos, "formals and actuals have different types");
 
-  return expTy(NULL, actual_ty(x->u.fun.result));
+  return expTy(
+      Tr_Call(x->u.fun.label,
+              argsList,
+              (x->u.fun.result != Ty_void) ? FALSE : TRUE,
+              level, x->u.fun.level),
+      actual_ty(x->u.fun.result));
 }
 
 struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
