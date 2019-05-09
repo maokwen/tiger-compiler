@@ -261,7 +261,7 @@ struct expty transExp_letExp(Tr_level level, S_table venv, S_table tenv, A_exp a
   S_beginScope(venv);
   S_beginScope(tenv);
   for (A_decList d = a->u.let.decs; d; d = d->tail)
-    transDec(level, venv, tenv, d->head);
+    transDec(level, venv, tenv, d->head, breakk);
   exp = transExp(level, venv, tenv, a->u.let.body, breakk);
   S_endScope(venv);
   S_endScope(tenv);
