@@ -36,3 +36,6 @@ Tr_exp Tr_neqExp(Tr_exp, Tr_exp);
 
 Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
 Tr_exp Tr_ifExp_noValue(Tr_exp, Tr_exp, Tr_exp);
+
+void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
+F_fragList Tr_getResult(void);

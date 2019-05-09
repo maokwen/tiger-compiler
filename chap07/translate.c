@@ -290,3 +290,9 @@ Tr_exp Tr_ifExp_noValue(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
                T_Seq(unUx(e3),
                      T_Label(z))))))));
 }
+
+static F_fragList fragList = NULL;
+void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals); //todo
+F_fragList Tr_getResult() {
+  return fragList;
+}

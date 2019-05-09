@@ -92,3 +92,21 @@ T_exp F_Exp(F_access acc, T_exp framePtr) {
   else
     return T_Temp(acc->u.reg);
 }
+
+F_frag F_StringFrag(Temp_label label, string str) {
+  F_frag f = (F_frag)checked_malloc(sizeof(*f));
+  f->kind = F_stringFrag;
+  f->u.stringg.label = label; f->u.stringg.str = str;
+  return f;
+}
+F_frag F_ProcFrag(T_stm body, F_frame frame) {
+  F_frag f = (F_frag)checked_malloc(sizeof(*f));
+  f->kind = F_procFrag;
+  f->u.proc.body = body; f->u.proc.frame = frame;
+  return f;
+}
+F_fragList F_FragList(F_frag head, F_fragList tail) {
+  F_fragList l = (F_fragList)checked_malloc(sizeof(*l));
+  l->head = head; l->tail = tail;
+  return l;
+}
