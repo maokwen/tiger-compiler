@@ -23,3 +23,13 @@ Tr_exp Tr_simpleVar(Tr_access, Tr_level);
 Tr_exp Tr_fieldVar(Tr_exp, int, Tr_level);
 Tr_exp Tr_subscriptVar(Tr_exp, Tr_exp, Tr_level);
 
+Tr_exp Tr_addOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_minusOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_timesOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_divideOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_ltOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_leOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_gtOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_geOpExp(Tr_exp, Tr_exp);
+Tr_exp Tr_eqExp(Tr_exp, Tr_exp);
+Tr_exp Tr_neqExp(Tr_exp, Tr_exp);

@@ -215,59 +215,44 @@ Tr_exp Tr_subscriptVar(Tr_exp var, Tr_exp sub, Tr_level lev) {
                                                T_Const(F_wordSize)))));
 }
 
-Tr_exp Tr_addOpExp(Tr_exp l, Tr_exp r) {
-  return Tr_Ex(T_Binop(T_plus,
+Tr_exp Tr_arithmeticOpExp(Tr_exp l, Tr_exp r, T_binOp op) {
+  return Tr_Ex(T_Binop(op,
                        unEx(l),
                        unEx(r)));
+}
+Tr_exp Tr_logicalOpExp(Tr_exp l, Tr_exp r, T_binOp op) {
+  T_stm stm = T_Cjump(op, UnEx(l), UnEx(r), NULL, NULL);
+  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
+  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
+  return Tr_Cx(trues, falses, stm);
+}
+Tr_exp Tr_addOpExp(Tr_exp l, Tr_exp r) {
+  return Tr_arithmeticOpExp(l, r, T_plus);
 }
 Tr_exp Tr_minusOpExp(Tr_exp l, Tr_exp r) {
-  return Tr_Ex(T_Binop(T_minus,
-                       unEx(l),
-                       unEx(r)));
+  return Tr_arithmeticOpExp(l, r, T_minus);
 }
 Tr_exp Tr_timesOpExp(Tr_exp l, Tr_exp r) {
-  return Tr_Ex(T_Binop(T_mul,
-                       unEx(l),
-                       unEx(r)));
+  return Tr_arithmeticOpExp(l, r, T_mul);
 }
 Tr_exp Tr_divideOpExp(Tr_exp l, Tr_exp r) {
-  return Tr_Ex(T_Binop(T_div,
-                       unEx(l),
-                       unEx(r)));
+  return Tr_arithmeticOpExp(l, r, T_div);
 }
 Tr_exp Tr_ltOpExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_lt, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_lt);
 }
 Tr_exp Tr_leOpExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_le, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_le);
 }
 Tr_exp Tr_gtOpExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_gt, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_gt);
 }
 Tr_exp Tr_geOpExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_ge, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_ge);
 }
 Tr_exp Tr_eqExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_eq, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_eq);
 }
 Tr_exp Tr_neqExp(Tr_exp l, Tr_exp r) {
-  T_stm stm = T_Cjump(T_ne, UnEx(l), UnEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
-  return Tr_Cx(trues, falses, stm);
+  Tr_logicalOpExp(l, r, T_ne);
 }
