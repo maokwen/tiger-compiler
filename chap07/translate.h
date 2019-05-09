@@ -43,5 +43,7 @@ Tr_exp Tr_ifExp_noValue(Tr_exp, Tr_exp, Tr_exp);
 Tr_exp Tr_recordExp(Tr_expList fields, int size);
 Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init);
 
+Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body);
+
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
 F_fragList Tr_getResult(void);

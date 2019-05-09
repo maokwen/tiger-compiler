@@ -229,7 +229,7 @@ struct expty transExp_whileExp(Tr_level level, S_table venv, S_table tenv, A_exp
   if (body.ty->kind != Ty_void)
     EM_error(a->u.whilee.test->pos, "body of while not unit");
 
-  return expTy(NULL, Ty_Void());
+  return expTy(Tr_whileExp(test.exp, body.exp), Ty_Void());
 }
 
 struct expty transExp_forExp(Tr_level level, S_table venv, S_table tenv, A_exp a) {
@@ -239,15 +239,34 @@ struct expty transExp_forExp(Tr_level level, S_table venv, S_table tenv, A_exp a
   if (lo.ty->kind != Ty_int || hi.ty->kind != Ty_int)
     EM_error(a->u.forr.lo->pos, "lo or hi expr is not int");
 
-  S_beginScope(venv);
-  transDec(level, venv, tenv,
-           A_VarDec(a->pos, a->u.forr.var, S_Symbol("int"), a->u.forr.lo));
-  struct expty body = transExp(level, venv, tenv, a->u.forr.body);
-  if (body.ty->kind != Ty_void)
-    EM_error(a->u.forr.body->pos, "body of for returns non unit");
-  S_endScope(venv);
-
-  return expTy(NULL, Ty_Void());
+  /*
+   * LET VAR i := lo
+   *     VAR lmt := hi
+   * IN
+   *    IF lo < hi THEN
+   *      WHILE i <= lmt DO
+   *        (body;
+   *         i := i+1)
+   */
+  A_pos pos1 = a->pos;
+  A_pos pos2 = a->u.forr.body->pos;
+  S_symbol var = a->u.forr.var;
+  S_symbol lmt = S_Symbol("limit");
+  S_symbol vlo = a->u.forr.var;
+  S_symbol vhi = a->u.forr.var;
+  A_exp ebody = a->u.forr.body;
+  A_exp transformed = A_LetExp(pos1,
+      A_DecList(A_VarDec(pos1, var, S_Symbol("int"), vlo),
+      A_DecList(A_VarDec(pos1, lmt, S_Symbol("int"), vhi), NULL)),
+          A_IfExp(pos1,
+              A_OpExp(pos1, A_ltOp, vlo, vhi),
+              A_WhileExp(pos1,
+                  A_OpExp(pos1, A_leOp, var, lmt),
+                  A_SeqExp(pos2, A_ExpList(ebody, 
+                                 A_ExpList(A_OpExp(pos1, A_plusOp, var, A_IntExp(pos1, 1)), NULL)))),
+              NULL)
+  );
+  return transExp(level, venv, tenv, transformed);
 }
 
 struct expty transExp_letExp(Tr_level level, S_table venv, S_table tenv, A_exp a) {
