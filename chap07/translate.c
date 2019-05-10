@@ -248,22 +248,23 @@ Tr_exp Tr_divideOpExp(Tr_exp l, Tr_exp r) {
   return Tr_arithmeticOpExp(l, r, T_div);
 }
 Tr_exp Tr_ltOpExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_lt);
+  return Tr_logicalOpExp(l, r, T_lt);
 }
 Tr_exp Tr_leOpExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_le);
+  return Tr_logicalOpExp(l, r, T_le);
 }
 Tr_exp Tr_gtOpExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_gt);
+  return Tr_logicalOpExp(l, r, T_gt);
 }
 Tr_exp Tr_geOpExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_ge);
+  return Tr_logicalOpExp(l, r, T_ge);
 }
 Tr_exp Tr_eqExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_eq);
+  return Tr_logicalOpExp(l, r, T_eq);
 }
 Tr_exp Tr_neqExp(Tr_exp l, Tr_exp r) {
-  Tr_logicalOpExp(l, r, T_ne);
+  return Tr_logicalOpExp(l, r, T_ne);
+}
 }
 
 Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
