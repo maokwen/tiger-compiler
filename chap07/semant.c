@@ -118,20 +118,24 @@ struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a,
       EM_error(a->u.op.right->pos, "same type required");
   }
 
+  Tr_exp op_exp;
+
   switch (oper) {
-    case A_plusOp:    Tr_addOpExp(   left.exp, right.exp);
-    case A_minusOp:   Tr_minusOpExp( left.exp, right.exp);
-    case A_timesOp:   Tr_timespExp(  left.exp, right.exp);
-    case A_divideOp:  Tr_divideOpExp(left.exp, right.exp);
-    case A_ltOp:      Tr_ltOpExp(    left.exp, right.exp);
-    case A_leOp:      Tr_leOpExp(    left.exp, right.exp);
-    case A_gtOp:      Tr_gtOpExp(    left.exp, right.exp);
-    case A_geOp:      Tr_geOpExp(    left.exp, right.exp);
-    case A_eqOp:      Tr_eqExp(      left.exp, right.exp);
-    case A_neqOp:     Tr_neqExp(     left.exp, right.exp);
+    case A_plusOp:    op_exp = Tr_addOpExp(   left.exp, right.exp); break;
+    case A_minusOp:   op_exp = Tr_minusOpExp( left.exp, right.exp); break;
+    case A_timesOp:   op_exp = Tr_timespExp(  left.exp, right.exp); break;
+    case A_divideOp:  op_exp = Tr_divideOpExp(left.exp, right.exp); break;
+    case A_ltOp:      op_exp = Tr_ltOpExp(    left.exp, right.exp); break;
+    case A_leOp:      op_exp = Tr_leOpExp(    left.exp, right.exp); break;
+    case A_gtOp:      op_exp = Tr_gtOpExp(    left.exp, right.exp); break;
+    case A_geOp:      op_exp = Tr_geOpExp(    left.exp, right.exp); break;
+    case A_eqOp:
+                      op_exp = Tr_eqExp(      left.exp, right.exp); break;
+    case A_neqOp:
+                      op_exp = Tr_neqExp(     left.exp, right.exp); break;
   }
 
-  return expTy(NULL, Ty_Int());
+  return expTy(op_exp, Ty_Int());
 }
 
 struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
