@@ -180,6 +180,11 @@ static struct Cx unCx(Tr_exp e) {
   assert(0);
 }
 
+
+Tr_exp Tr_noExp() {
+  return Ex(T_Const(0));
+}
+
 Tr_exp Tr_nilExp() {
   Tr_Ex(T_Const(0));
 }

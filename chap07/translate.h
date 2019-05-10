@@ -18,6 +18,8 @@ typedef struct Tr_expList_ *Tr_expList;
 struct Tr_expList_ { Tr_exp head; Tr_expList tail; };
 Tr_expList Tr_ExpList(Tr_exp head, Tr_expList tail);
 
+Tr_exp Tr_noExp();
+
 Tr_exp Tr_nilExp();
 Tr_exp Tr_intExp(int);
 Tr_exp Tr_stringExp(string);

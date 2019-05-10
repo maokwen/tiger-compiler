@@ -378,19 +378,19 @@ struct expty transVar_subscriptVar(Tr_level level, S_table venv, S_table tenv, A
  * Translate Declearion
  */
 
-void transDec_varDec(     Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
-void transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
-void transDec_typeDec(    Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
+Tr_exp transDec_varDec(     Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
+Tr_exp transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
+Tr_exp transDec_typeDec(    Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk);
 
-void transDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
+Tr_exp transDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
   switch (d->kind) {
-    case A_varDec:      transDec_varDec(     level,venv, tenv, d, breakk); break;
-    case A_functionDec: transDec_functionDec(level,venv, tenv, d, breakk); break;
-    case A_typeDec:     transDec_typeDec(    level,venv, tenv, d, breakk); break;
+    case A_varDec:      return transDec_varDec(     level,venv, tenv, d, breakk);
+    case A_functionDec: return transDec_functionDec(level,venv, tenv, d, breakk);
+    case A_typeDec:     return transDec_typeDec(    level,venv, tenv, d, breakk);
   }
 }
 
-void transDec_varDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
+Tr_exp transDec_varDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
   struct expty init = transExp(level, venv, tenv, d->u.var.init, breakk);
 
   if (d->u.var.typ) {
@@ -405,10 +405,13 @@ void transDec_varDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_l
     EM_error(d->u.var.init->pos,
              "cannot initialize a nil type without specified record type");
 
-  S_enter(venv, d->u.var.var, E_VarEntry(Tr_allocLocal(level, TRUE), init.ty)); // todo check escape = false
+  Tr_access access = Tr_allocLocal(level, TRUE); // todo check escape = false
+  S_enter(venv, d->u.var.var, E_VarEntry(access, init.ty));
+
+  return Tr_assignExp(Tr_simpleVar(access, level), init.exp);
 }
 
-void transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
+Tr_exp transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
   for (A_fundecList fundecs = d->u.function; fundecs; fundecs = fundecs->tail) {
     S_symbol name = fundecs->head->name;
     Ty_tyList formals = makeFormalTyList(tenv, fundecs->head->params);
@@ -461,9 +464,10 @@ void transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d, T
     }
     S_endScope(venv);
   }
+  return Tr_noExp();
 }
 
-void transDec_typeDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
+Tr_exp transDec_typeDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_label breakk) {
   for (A_nametyList decs = d->u.type; decs; decs = decs->tail) {
     S_symbol name = decs->head->name;
 
@@ -486,6 +490,7 @@ void transDec_typeDec(Tr_level level, S_table venv, S_table tenv, A_dec d, Temp_
       type->u.name.ty = Ty_Int();
     }
   }
+  return Tr_noExp();
 }
 
 Ty_ty transTy(Tr_level level, S_table tenv, A_ty a) {
