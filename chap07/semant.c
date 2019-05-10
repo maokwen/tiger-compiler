@@ -130,8 +130,12 @@ struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a,
     case A_gtOp:      op_exp = Tr_gtOpExp(    left.exp, right.exp); break;
     case A_geOp:      op_exp = Tr_geOpExp(    left.exp, right.exp); break;
     case A_eqOp:
+      if (left.ty->kind == Ty_string)
+                      op_exp = Tr_stringEqExp(left.exp, right.exp); break;
                       op_exp = Tr_eqExp(      left.exp, right.exp); break;
     case A_neqOp:
+      if (left.ty->kind == Ty_string)
+                      op_exp = Tr_stringNeExp(left.exp, right.exp); break;
                       op_exp = Tr_neqExp(     left.exp, right.exp); break;
   }
 

@@ -265,6 +265,12 @@ Tr_exp Tr_eqExp(Tr_exp l, Tr_exp r) {
 Tr_exp Tr_neqExp(Tr_exp l, Tr_exp r) {
   return Tr_logicalOpExp(l, r, T_ne);
 }
+Tr_exp Tr_stringEqExp(Tr_exp l, Tr_exp r) {
+  return Tr_Ex(T_Call(T_Name(Temp_namedlabel("stringEqual")),
+               T_ExpList(l, T_ExpList(r, NULL))));
+}
+Tr_exp Tr_stringNqExp(Tr_exp l, Tr_exp r) {
+  return Tr_stringEqExp(r, l);
 }
 
 Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
