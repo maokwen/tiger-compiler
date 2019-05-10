@@ -188,7 +188,7 @@ struct expty transExp_assignExp(Tr_level level, S_table venv, S_table tenv, A_ex
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
         type_msg(lvar.ty), type_msg(rvar.ty));
 
-  return expTy(NULL, Ty_Void());
+  return expTy(Tr_assignExp(lvar.ty, rvar.ty), Ty_Void());
 }
 
 struct expty transExp_ifExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {

@@ -361,6 +361,10 @@ Tr_exp Tr_callExp(Temp_label name, Tr_expList args, bool returnn, Tr_level cur, 
 
 }
 
+Tr_exp Tr_assignExp(Tr_exp lvar, Tr_exp rvar) {
+  return Tr_Ux(T_Move(UnEx(lvar), UnEx(rvar)));
+}
+
 static F_fragList fragList = NULL;
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals); //todo
 F_fragList Tr_getResult() {
