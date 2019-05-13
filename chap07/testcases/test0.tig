@@ -1,0 +1,5 @@
+let
+	type intt = int
+in
+    nil
+end
