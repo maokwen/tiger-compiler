@@ -14,6 +14,7 @@ F_accessList F_formals(F_frame f);
 F_access F_allocLocal(F_frame f, bool escape);
 
 Temp_temp F_FP(void);
+Temp_temp F_RV(void);
 extern const int F_wordSize;
 T_exp F_Exp(F_access acc, T_exp framePtr);
 
@@ -34,3 +35,5 @@ struct F_fragList_ {F_frag head; F_fragList tail;};
 F_fragList F_FragList(F_frag head, F_fragList tail);
 
 T_exp F_externalCall(string s, T_expList args);
+
+T_stm F_procEntryExit1(F_frame, T_stm stm);

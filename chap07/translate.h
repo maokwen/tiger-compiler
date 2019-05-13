@@ -39,7 +39,7 @@ Tr_exp Tr_geOpExp(Tr_exp, Tr_exp);
 Tr_exp Tr_eqExp(Tr_exp, Tr_exp);
 Tr_exp Tr_neqExp(Tr_exp, Tr_exp);
 Tr_exp Tr_stringEqExp(Tr_exp l, Tr_exp r);
-Tr_exp Tr_stringNqExp(Tr_exp l, Tr_exp r);
+Tr_exp Tr_stringNeExp(Tr_exp l, Tr_exp r);
 
 Tr_exp Tr_ifExp(Tr_exp, Tr_exp, Tr_exp);
 Tr_exp Tr_ifExp_noValue(Tr_exp, Tr_exp, Tr_exp);
@@ -50,9 +50,15 @@ Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init);
 Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body, Temp_label done);
 Tr_exp Tr_breakExp(Temp_label done);
 
-Tr_exp Tr_callExp(Temp_label name, Tr_expList args, bool returnn, Tr_level cur, Tr_level lev);
+Tr_exp Tr_callExp(Temp_label name, Tr_expList args, Tr_level cur, Tr_level lev);
 
 Tr_exp Tr_assignExp(Tr_exp lvar, Tr_exp rvar);
 
+Tr_exp Tr_LetExp(Tr_expList decs, Tr_exp body);
+
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
 F_fragList Tr_getResult(void);
+
+T_stm F_procEntryExit1(F_frame frame, T_stm stm);
+
+void Tr_printTree(Tr_exp e);

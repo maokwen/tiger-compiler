@@ -3,8 +3,9 @@
 #include "util.h"
 #include "symbol.h"
 #include "temp.h"
-#include "frame.h"
 #include "tree.h"
+#include "frame.h"
+#include "printtree.h"
 #include "translate.h"
 
 struct Tr_level_ { Tr_level parent; F_frame frame; };
@@ -32,6 +33,12 @@ static Tr_exp Tr_Cx(patchList trues, patchList falses, T_stm stm);
 static    T_exp   unEx(Tr_exp e);
 static    T_stm   unNx(Tr_exp e);
 static struct Cx  unCx(Tr_exp e);
+
+static F_fragList fragList = NULL;
+
+F_fragList Tr_getResult() {
+  return fragList;
+}
 
 Tr_level Tr_outermost(void) {
   static Tr_level outermost = NULL;
@@ -128,17 +135,18 @@ static T_exp unEx(Tr_exp e) {
       return e->u.ex;
     case Tr_nx:
       return T_Eseq(e->u.nx, T_Const(0));
-    case Tr_cx: // flag := (a > b)
+    case Tr_cx: {// flag := (a > b)
       Temp_temp r = Temp_newtemp();
       Temp_label t = Temp_newlabel(), f = Temp_newlabel();
       doPatch(e->u.cx.trues, t);
       doPatch(e->u.cx.falses, f);
-      return  T_Eseq(T_Move(T_Temp(r), T_Const(1)),
+      return T_Eseq(T_Move(T_Temp(r), T_Const(1)),
               T_Eseq(e->u.cx.stm,
               T_Eseq(T_Label(f),
               T_Eseq(T_Move(T_Temp(r), T_Const(0)),
               T_Eseq(T_Label(t), 
               T_Temp(r))))));
+    }
   }
   assert(0);
 }
@@ -165,15 +173,17 @@ static T_stm unNx(Tr_exp e) {
 }
 static struct Cx unCx(Tr_exp e) {
   switch (e->kind) {
-    case Tr_ex: // if(x)
+    case Tr_ex: { // if(x)
       T_stm stm = T_Cjump(T_ne, unEx(e), T_Const(0), NULL, NULL);
       patchList trues  = PatchList(&stm->u.CJUMP.true,  NULL);
       patchList falses = PatchList(&stm->u.CJUMP.false, NULL);
       struct Cx cx = { trues, falses, stm };
       return cx;
-    case Tr_nx:
+    }
+    case Tr_nx: {
       assert(0);
       break;
+    }
     case Tr_cx:
       return e->u.cx;
   }
@@ -182,7 +192,7 @@ static struct Cx unCx(Tr_exp e) {
 
 
 Tr_exp Tr_noExp() {
-  return Ex(T_Const(0));
+  return Tr_Ex(T_Const(0));
 }
 
 Tr_exp Tr_nilExp() {
@@ -206,7 +216,7 @@ Tr_exp Tr_simpleVar(Tr_access acc, Tr_level lev) {
   if (acc->level == lev) return Tr_Ex(F_Exp(acc->access, T_Temp(F_FP())));
 
   Tr_access static_link_offset = Tr_formals(lev)->head;
-  return Tr_Ex(F_Exp(static_link_offset, unEx(Tr_simpleVar(acc, lev->parent))));
+  return Tr_Ex(F_Exp(static_link_offset->access, unEx(Tr_simpleVar(acc, lev->parent))));
 }
 Tr_exp Tr_fieldVar(Tr_exp var, int index, Tr_level lev) {
   /*
@@ -234,8 +244,8 @@ Tr_exp Tr_arithmeticOpExp(Tr_exp l, Tr_exp r, T_binOp op) {
                        unEx(l),
                        unEx(r)));
 }
-Tr_exp Tr_logicalOpExp(Tr_exp l, Tr_exp r, T_binOp op) {
-  T_stm stm = T_Cjump(op, UnEx(l), UnEx(r), NULL, NULL);
+Tr_exp Tr_logicalOpExp(Tr_exp l, Tr_exp r, T_relOp op) {
+  T_stm stm = T_Cjump(op, unEx(l), unEx(r), NULL, NULL);
   patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
   patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
   return Tr_Cx(trues, falses, stm);
@@ -272,23 +282,23 @@ Tr_exp Tr_neqExp(Tr_exp l, Tr_exp r) {
 }
 Tr_exp Tr_stringEqExp(Tr_exp l, Tr_exp r) {
   return Tr_Ex(T_Call(T_Name(Temp_namedlabel("stringEqual")),
-               T_ExpList(l, T_ExpList(r, NULL))));
+               T_ExpList(unEx(l), T_ExpList(unEx(r), NULL))));
 }
-Tr_exp Tr_stringNqExp(Tr_exp l, Tr_exp r) {
+Tr_exp Tr_stringNeExp(Tr_exp l, Tr_exp r) {
   return Tr_stringEqExp(r, l);
 }
 
 Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
   Temp_label t = Temp_newlabel(), f = Temp_newlabel(), z = Temp_newlabel();
-  Temp_label r = Temp_newlabel();
+  Temp_temp r = Temp_newtemp();
   doPatch(e1->u.cx.trues, t);
   doPatch(e1->u.cx.trues, f);
-  return Tr_Ex(T_Eseq(UnEx(e1),
+  return Tr_Ex(T_Eseq(unNx(e1),
                T_Eseq(T_Label(t),
-               T_Eseq(T_Move(r, unEx(e2)),
-               T_Eseq(T_Jump(z, Temp_LabelList(z, NULL)),
+               T_Eseq(T_Move(T_Temp(r), unEx(e2)),
+               T_Eseq(T_Jump(T_Name(z), Temp_LabelList(z, NULL)),
                T_Eseq(T_Label(f),
-               T_Eseq(T_Move(r, unEx(e3)),
+               T_Eseq(T_Move(T_Temp(r), unEx(e3)),
                T_Eseq(T_Label(z),
                       T_Temp(r)))))))));
 }
@@ -297,23 +307,22 @@ Tr_exp Tr_ifExp_noValue(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
   doPatch(e1->u.cx.trues, t);
   doPatch(e1->u.cx.trues, f);
   if (!e3) {
-    return Tr_Ex(T_Seq(UnEx(e1),
+    return Tr_Nx(T_Seq(unNx(e1),
                  T_Seq(T_Label(t),
                  T_Seq(unNx(e2),
                  T_Label(f)))));
   }
   Temp_label z = Temp_newlabel();
-  return Tr_Ex(T_Seq(UnEx(e1),
+  return Tr_Nx(T_Seq(unNx(e1),
                T_Seq(T_Label(t),
                T_Seq(unNx(e2),
-               T_Seq(T_Jump(z, Temp_LabelList(z, NULL)),
+               T_Seq(T_Jump(T_Name(z), Temp_LabelList(z, NULL)),
                T_Seq(T_Label(f),
-               T_Seq(unUx(e3),
+               T_Seq(unNx(e3),
                      T_Label(z))))))));
 }
 
 Tr_exp Tr_recordExp(Tr_expList fields, int size) {
-  int size;
   Temp_temp r = Temp_newtemp();
   T_stm acc =
       T_Seq(T_Move(T_Temp(r),
@@ -324,17 +333,17 @@ Tr_exp Tr_recordExp(Tr_expList fields, int size) {
   T_stm p = acc;
   for (int offset = 0; fields; fields = fields->tail, offset += 1) {
     T_stm s =
-        T_Move(T_Mem(T_BinOp(T_plus, T_Temp(r), T_Const(offset * F_wordSize))),
-               fields->head);
+        T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(offset * F_wordSize))),
+               unEx(fields->head));
     if (!(fields->tail)) acc->u.SEQ.right = s;
     else acc->u.SEQ.right = T_Seq(s, NULL);
   }
 
-  return T_Ex(T_Eseq(acc, T_Temp(r)));
+  return Tr_Ex(T_Eseq(acc, T_Temp(r)));
 }
 Tr_exp Tr_arrayExp(Tr_exp size, Tr_exp init) {
-  return T_Ex(T_Call(T_Name(Temp_namedlabel("initArray")), //todo:initArray
-                T_ExpList(size, T_ExpList(init, NULL))));
+  return Tr_Ex(T_Call(T_Name(Temp_namedlabel("initArray")),
+                T_ExpList(unEx(size), T_ExpList(unEx(init), NULL))));
 }
 
 Tr_exp Tr_whileExp(Tr_exp cond, Tr_exp body, Temp_label done) {
@@ -353,31 +362,47 @@ Tr_exp Tr_breakExp(Temp_label done) {
   return Tr_Nx(T_Jump(T_Name(done), Temp_LabelList(done, NULL)));
 }
 
-Tr_exp Tr_callExp(Temp_label name, Tr_expList args, bool returnn, Tr_level cur, Tr_level lev) {
-  T_expList h = T_ExpList(NULL, NULL), p = h, r;
+Tr_exp Tr_callExp(Temp_label name, Tr_expList args, Tr_level cur, Tr_level lev) {
+  T_expList h = T_ExpList(NULL, NULL), p = h;
   for (; args; args = args->tail) {
     p->tail = T_ExpList(unEx(args->head), NULL);
     p = p->tail;
   }
 
-  T_exp argss = T_Temp(F_FP());
+  T_exp fp = T_Temp(F_FP());
 	while (cur != lev->parent) {
-		argss = F_Exp(F_formals(cur->frame)->head, argss);
+		fp = F_Exp(F_formals(cur->frame)->head, fp);
 		cur = cur->parent;
 	}
-  h->head = Tr_Nx(argss);
+  h->head = fp;
 
-  if (returnn) return Tr_Ex(T_Call(T_Name(name), argss));
-  return Tr_Nx(T_Call(T_Name(name), args));
-
+  return Tr_Ex(T_Call(T_Name(name), h));
 }
 
 Tr_exp Tr_assignExp(Tr_exp lvar, Tr_exp rvar) {
-  return Tr_Ux(T_Move(UnEx(lvar), UnEx(rvar)));
+  return Tr_Nx(T_Move(unEx(lvar), unEx(rvar)));
 }
 
-static F_fragList fragList = NULL;
-void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals); //todo
-F_fragList Tr_getResult() {
-  return fragList;
+Tr_exp Tr_LetExp(Tr_expList decs, Tr_exp body) {
+  T_stm h = T_Seq(NULL, NULL), p = h;
+	for (Tr_expList d = decs; d; d = d->tail) {
+    p->u.SEQ.right = T_Seq(unNx(d->head), NULL);
+    p = p->u.SEQ.right;
+  }
+  p = h->u.SEQ.right;
+  free(h);
+  
+  return Tr_Nx(T_Seq(p, unEx(body)));
+}
+
+void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals) {
+	F_frag frag = F_ProcFrag(unNx(body), level->frame);
+	fragList = F_FragList(frag, fragList);
+}
+
+T_stm F_procEntryExit1(F_frame frame, T_stm stm);
+
+void Tr_printTree(Tr_exp e) {
+    T_stmList sl = T_StmList(unNx(e), NULL);
+    printStmList(stdout, sl);
 }

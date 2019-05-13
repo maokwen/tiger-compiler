@@ -7,15 +7,19 @@
 #include "absyn.h"
 #include "types.h"
 #include "temp.h"
+#include "tree.h"
+#include "frame.h"
 #include "translate.h"
 #include "env.h"
+#include "printtree.h"
 #include "semant.h"
 
 void SEM_transProg(A_exp exp) {
   S_table tenv = E_base_tenv();
   S_table venv = E_base_venv();
   Tr_level level = Tr_outermost();
-  transExp(level, venv, tenv, exp, NULL);
+  struct expty et = transExp(level, venv, tenv, exp, NULL);
+  Tr_printTree(et.exp);
 }
 
 Ty_ty actual_ty(Ty_ty ty);
@@ -44,7 +48,7 @@ struct expty transExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_
     case A_nilExp:    return expTy(Tr_nilExp(),                Ty_Nil());
     case A_intExp:    return expTy(Tr_intExp(a->u.intt),       Ty_Int());
     case A_stringExp: return expTy(Tr_stringExp(a->u.stringg), Ty_String());
-    case A_breakExp:  return expTy(breakk,                     Ty_Void());
+    case A_breakExp:  return expTy(Tr_breakExp(breakk),        Ty_Void());
     case A_callExp:   return transExp_callExp(  level, venv, tenv, a, breakk);
     case A_opExp:     return transExp_opExp(    level, venv, tenv, a, breakk);
     case A_recordExp: return transExp_recordExp(level, venv, tenv, a, breakk);
@@ -90,9 +94,8 @@ struct expty transExp_callExp(Tr_level level, S_table venv, S_table tenv, A_exp 
   if (args || formals) EM_error(pos, "formals and actuals have different types");
 
   return expTy(
-      Tr_Call(x->u.fun.label,
+      Tr_callExp(x->u.fun.label,
               argsList,
-              (x->u.fun.result != Ty_void) ? FALSE : TRUE,
               level, x->u.fun.level),
       actual_ty(x->u.fun.result));
 }
@@ -123,7 +126,7 @@ struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a,
   switch (oper) {
     case A_plusOp:    op_exp = Tr_addOpExp(   left.exp, right.exp); break;
     case A_minusOp:   op_exp = Tr_minusOpExp( left.exp, right.exp); break;
-    case A_timesOp:   op_exp = Tr_timespExp(  left.exp, right.exp); break;
+    case A_timesOp:   op_exp = Tr_timesOpExp( left.exp, right.exp); break;
     case A_divideOp:  op_exp = Tr_divideOpExp(left.exp, right.exp); break;
     case A_ltOp:      op_exp = Tr_ltOpExp(    left.exp, right.exp); break;
     case A_leOp:      op_exp = Tr_leOpExp(    left.exp, right.exp); break;
@@ -167,7 +170,7 @@ struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_ex
     }
     efields = efields->tail;
     fields = fields->tail;
-    expl_p->tail = r_ExpList(efield.exp, NULL);
+    expl_p->tail = Tr_ExpList(efield.exp, NULL);
     size += 1;
   }
   if (efields || fields) EM_error(pos, "record type mismatched");
@@ -196,7 +199,7 @@ struct expty transExp_assignExp(Tr_level level, S_table venv, S_table tenv, A_ex
         "cannot initialize a variable of type '%s' with an rvalue of type '%s'",
         type_msg(lvar.ty), type_msg(rvar.ty));
 
-  return expTy(Tr_assignExp(lvar.ty, rvar.ty), Ty_Void());
+  return expTy(Tr_assignExp(lvar.exp, rvar.exp), Ty_Void());
 }
 
 struct expty transExp_ifExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
@@ -257,34 +260,36 @@ struct expty transExp_forExp(Tr_level level, S_table venv, S_table tenv, A_exp a
   A_pos pos2 = a->u.forr.body->pos;
   S_symbol var = a->u.forr.var;
   S_symbol lmt = S_Symbol("limit");
-  S_symbol vlo = a->u.forr.var;
-  S_symbol vhi = a->u.forr.var;
   A_exp ebody = a->u.forr.body;
   A_exp transformed = A_LetExp(pos1,
-      A_DecList(A_VarDec(pos1, var, S_Symbol("int"), vlo),
-      A_DecList(A_VarDec(pos1, lmt, S_Symbol("int"), vhi), NULL)),
+      A_DecList(A_VarDec(pos1, var, S_Symbol("int"), a->u.forr.lo),
+      A_DecList(A_VarDec(pos1, lmt, S_Symbol("int"), a->u.forr.hi), NULL)),
           A_IfExp(pos1,
-              A_OpExp(pos1, A_ltOp, vlo, vhi),
+              A_OpExp(pos1, A_ltOp, a->u.forr.lo, a->u.forr.hi),
               A_WhileExp(pos1,
-                  A_OpExp(pos1, A_leOp, var, lmt),
+                  A_OpExp(pos1, A_leOp, A_VarExp(pos1, A_SimpleVar(pos1, var)), A_VarExp(pos1, A_SimpleVar(pos1, lmt))),
                   A_SeqExp(pos2, A_ExpList(ebody, 
-                                 A_ExpList(A_OpExp(pos1, A_plusOp, var, A_IntExp(pos1, 1)), NULL)))),
+                                 A_ExpList(A_OpExp(pos1, A_plusOp, A_VarExp(pos1, A_SimpleVar(pos1, var)), A_IntExp(pos1, 1)), NULL)))),
               NULL)
   );
   return transExp(level, venv, tenv, transformed, breakk);
 }
 
 struct expty transExp_letExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
-  struct expty exp;
   S_beginScope(venv);
   S_beginScope(tenv);
-  for (A_decList d = a->u.let.decs; d; d = d->tail)
-    transDec(level, venv, tenv, d->head, breakk);
-  exp = transExp(level, venv, tenv, a->u.let.body, breakk);
+  Tr_expList h = Tr_ExpList(NULL, NULL), p = h;
+  for (A_decList d = a->u.let.decs; d; d = d->tail) {
+    p->tail = Tr_ExpList(transDec(level, venv, tenv, d->head, breakk), NULL);
+    p = p->tail;
+  }
+  p = h->tail;
+  free(h);
+  struct expty body = transExp(level, venv, tenv, a->u.let.body, breakk);
   S_endScope(venv);
   S_endScope(tenv);
 
-  return exp;
+  return expTy(Tr_LetExp(p, body.exp), body.ty);
 }
 
 struct expty transExp_arrayExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
@@ -461,6 +466,7 @@ Tr_exp transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d,
           EM_error(fundecs->head->pos, "return type mismatched '%s' and '%s')",
                   type_msg(result), type_msg(body.ty));
       }
+      Tr_procEntryExit(x->u.fun.level, body.exp, a);
     }
     S_endScope(venv);
   }

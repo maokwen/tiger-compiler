@@ -21,7 +21,7 @@ struct F_access_ {
 };
 
 static const int regNum = 6;
-static const int F_wordSize = 8;
+const int F_wordSize = 8;
 
 static F_access InFrame(int offset);
 static F_access InReg(Temp_temp reg);
@@ -80,10 +80,17 @@ F_accessList F_AccessList(F_access h, F_accessList t) {
   return p;
 };
 
+static Temp_temp framePoint = NULL;
+static Temp_temp returnValue = NULL;
+
 Temp_temp F_FP() {
-  static Temp_temp fp = NULL;
-  if (!fp) fp = Temp_newtemp();
-  return fp;
+  if (!framePoint) framePoint = Temp_newtemp();
+  return framePoint;
+}
+
+Temp_temp F_RV() {
+  if (!returnValue) returnValue = Temp_newtemp();
+  return returnValue;
 }
 
 T_exp F_Exp(F_access acc, T_exp framePtr) {
@@ -113,4 +120,8 @@ F_fragList F_FragList(F_frag head, F_fragList tail) {
 
 T_exp F_externalCall(string s, T_expList args) {
   return T_Call(T_Name(Temp_namedlabel(s)), args);
+}
+
+T_stm F_procEntryExit1(F_frame frame, T_stm stm) {
+  return stm;
 }
