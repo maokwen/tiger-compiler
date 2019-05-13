@@ -41,12 +41,9 @@ F_fragList Tr_getResult() {
 }
 
 Tr_level Tr_outermost(void) {
-  static Tr_level outermost = NULL;
-  if (!outermost) {
-    outermost = checked_malloc(sizeof(*outermost));
-    outermost->parent = NULL;
-    outermost->frame = F_newFrame(Temp_newlabel(), NULL);
-  }
+  static Tr_level outermost;
+  if (!outermost)
+    outermost = Tr_newLevel(NULL, Temp_newlabel(), NULL);
   return outermost;
 }
 
@@ -246,8 +243,8 @@ Tr_exp Tr_arithmeticOpExp(Tr_exp l, Tr_exp r, T_binOp op) {
 }
 Tr_exp Tr_logicalOpExp(Tr_exp l, Tr_exp r, T_relOp op) {
   T_stm stm = T_Cjump(op, unEx(l), unEx(r), NULL, NULL);
-  patchList trues = PatchList(&stm->u.SEQ.left->u.CJUMP.true, NULL);
-  patchList falses = PatchList(&stm->u.SEQ.right->u.CJUMP.true, NULL);
+  patchList trues = PatchList(&stm->u.CJUMP.true, NULL);
+  patchList falses = PatchList(&stm->u.CJUMP.false, NULL);
   return Tr_Cx(trues, falses, stm);
 }
 Tr_exp Tr_addOpExp(Tr_exp l, Tr_exp r) {
@@ -335,8 +332,9 @@ Tr_exp Tr_recordExp(Tr_expList fields, int size) {
     T_stm s =
         T_Move(T_Mem(T_Binop(T_plus, T_Temp(r), T_Const(offset * F_wordSize))),
                unEx(fields->head));
-    if (!(fields->tail)) acc->u.SEQ.right = s;
-    else acc->u.SEQ.right = T_Seq(s, NULL);
+    if (!(fields->tail)) p->u.SEQ.right = s;
+    else p->u.SEQ.right = T_Seq(s, NULL);
+    p = p->u.SEQ.right;
   }
 
   return Tr_Ex(T_Eseq(acc, T_Temp(r)));
@@ -384,15 +382,31 @@ Tr_exp Tr_assignExp(Tr_exp lvar, Tr_exp rvar) {
 }
 
 Tr_exp Tr_LetExp(Tr_expList decs, Tr_exp body) {
-  T_stm h = T_Seq(NULL, NULL), p = h;
-	for (Tr_expList d = decs; d; d = d->tail) {
-    p->u.SEQ.right = T_Seq(unNx(d->head), NULL);
-    p = p->u.SEQ.right;
-  }
-  p = h->u.SEQ.right;
-  free(h);
+  Tr_exp d = Tr_seqStm(decs);
   
-  return Tr_Nx(T_Seq(p, unEx(body)));
+  return Tr_Nx(T_Seq(unNx(d), unNx(body)));
+}
+
+Tr_exp Tr_seqStm(Tr_expList list) {
+  // T_stm h = T_Seq(NULL, NULL), p = h;
+	// for (Tr_expList l = list; l; l = l->tail) {
+  //   T_stm s = unNx(l->head);
+  //   if (!(l->tail)) p->u.SEQ.right = s;
+  //   else p->u.SEQ.right = T_Seq(s, NULL);
+  //   p = p->u.SEQ.right;
+  // }
+  // p = h->u.SEQ.right;
+  // free(h);
+  
+  // return Tr_Nx(p);
+
+  if (!list->tail) return list->head;
+  return Tr_Nx(T_Seq(unNx(list->head), unNx(Tr_eseqExp(list->tail))));
+}
+
+Tr_exp Tr_eseqExp(Tr_expList list) {
+  if (!list->tail) return list->head;
+  return Tr_Ex(T_Eseq(unNx(list->head), unEx(Tr_eseqExp(list->tail))));
 }
 
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals) {

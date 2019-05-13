@@ -56,6 +56,9 @@ Tr_exp Tr_assignExp(Tr_exp lvar, Tr_exp rvar);
 
 Tr_exp Tr_LetExp(Tr_expList decs, Tr_exp body);
 
+Tr_exp Tr_eseqExp(Tr_expList list);
+Tr_exp Tr_seqStm(Tr_expList list);
+
 void Tr_procEntryExit(Tr_level level, Tr_exp body, Tr_accessList formals);
 F_fragList Tr_getResult(void);
 

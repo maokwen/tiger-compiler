@@ -49,9 +49,9 @@ F_frame F_newFrame(Temp_label label, U_boolList escape) {
   F_accessList h = F_AccessList(NULL, NULL), p = h;
   for (; escape; escape = escape->tail) {
     if (escape->head == TRUE || reg >= regNum) {
-      p->tail = F_AccessList(InFrame(offset += F_wordSize), p);
+      p->tail = F_AccessList(InFrame(offset += F_wordSize), NULL);
     } else {
-      p->tail = F_AccessList(InReg(Temp_newtemp()), p);
+      p->tail = F_AccessList(InReg(Temp_newtemp()), NULL);
     }
     p = p->tail;
   }

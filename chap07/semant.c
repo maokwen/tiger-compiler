@@ -134,13 +134,14 @@ struct expty transExp_opExp(Tr_level level, S_table venv, S_table tenv, A_exp a,
     case A_geOp:      op_exp = Tr_geOpExp(    left.exp, right.exp); break;
     case A_eqOp:
       if (left.ty->kind == Ty_string)
-                      op_exp = Tr_stringEqExp(left.exp, right.exp); break;
-                      op_exp = Tr_eqExp(      left.exp, right.exp); break;
+                      op_exp = Tr_stringEqExp(left.exp, right.exp);
+      else            op_exp = Tr_eqExp(      left.exp, right.exp);break;
     case A_neqOp:
       if (left.ty->kind == Ty_string)
-                      op_exp = Tr_stringNeExp(left.exp, right.exp); break;
-                      op_exp = Tr_neqExp(     left.exp, right.exp); break;
+                      op_exp = Tr_stringNeExp(left.exp, right.exp);
+      else            op_exp = Tr_neqExp(     left.exp, right.exp); break;
   }
+  
 
   return expTy(op_exp, Ty_Int());
 }
@@ -171,6 +172,7 @@ struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_ex
     efields = efields->tail;
     fields = fields->tail;
     expl_p->tail = Tr_ExpList(efield.exp, NULL);
+    expl_p = expl_p->tail;
     size += 1;
   }
   if (efields || fields) EM_error(pos, "record type mismatched");
@@ -181,12 +183,19 @@ struct expty transExp_recordExp(Tr_level level, S_table venv, S_table tenv, A_ex
 }
 
 struct expty transExp_seqExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
-  A_expList seq;
-  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail)
-    transExp(level, venv, tenv, seq->head, breakk);
+  A_expList seq = a->u.seq;
+  if (!seq || !seq->head) return expTy(Tr_noExp(), Ty_Void());
 
-  if (!seq || !seq->head) return expTy(NULL, Ty_Void());
-  return transExp(level, venv, tenv, seq->head, breakk);
+  Tr_expList head = Tr_ExpList(NULL, NULL), p = head;
+  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail) {
+    struct expty s = transExp(level, venv, tenv, seq->head, breakk);
+    p->tail = Tr_ExpList(s.exp, NULL);
+    p = p->tail;
+  }
+  struct expty last = transExp(level, venv, tenv, seq->head, breakk);
+  head->head = last.exp;
+  
+  return expTy(Tr_eseqExp(head), last.ty);
 }
 
 struct expty transExp_assignExp(Tr_level level, S_table venv, S_table tenv, A_exp a, Temp_label breakk) {
@@ -457,7 +466,7 @@ Tr_exp transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d,
         S_enter(venv, l->head->name, E_VarEntry(a->head, t->head));
 
       // check return type
-      struct expty body = transExp(level, venv, tenv, fundecs->head->body, breakk);
+      struct expty body = transExp(lev, venv, tenv, fundecs->head->body, breakk);
       if (!has_same_ty(result, body.ty)) {
         if (has_same_ty(result, Ty_Void()))
           EM_error(fundecs->head->pos, "procedure returns value '%s'",
@@ -466,7 +475,7 @@ Tr_exp transDec_functionDec(Tr_level level, S_table venv, S_table tenv, A_dec d,
           EM_error(fundecs->head->pos, "return type mismatched '%s' and '%s')",
                   type_msg(result), type_msg(body.ty));
       }
-      Tr_procEntryExit(x->u.fun.level, body.exp, a);
+      Tr_procEntryExit(lev, body.exp, a);
     }
     S_endScope(venv);
   }
