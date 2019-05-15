@@ -32,6 +32,7 @@ test49.test:
 	@echo "Skip test49.tig"
 
 %.test: ../testcases/%.tig
+	mkdir -p testoutput
 	./a.out $< > testoutput/$@ 2>&1
 	echo "==============================" >> testoutput/$@
 	cat $< >> testoutput/$@

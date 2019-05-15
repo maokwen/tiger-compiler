@@ -24,4 +24,5 @@ all-tests := $(addsuffix .test, $(notdir $(basename $(wildcard ../testcases/*.ti
 test: $(all-tests)
 
 %.test: ../testcases/%.tig
+	mkdir -p testoutput
 	./a.out $< > testoutput/$@

@@ -37,4 +37,5 @@ test49.test:
 	./a.out ../testcases/test49.tig
 
 %.test: ../testcases/%.tig
+	mkdir -p testoutput
 	./a.out $< > /dev/null

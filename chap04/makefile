@@ -48,4 +48,5 @@ test49.test:
 	@echo "Skip test49.tig"
 
 %.test: ../testcases/%.tig
+	mkdir -p testoutput
 	./a.out $< > testoutput/$@
