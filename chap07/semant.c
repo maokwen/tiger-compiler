@@ -187,7 +187,7 @@ struct expty transExp_seqExp(Tr_level level, S_table venv, S_table tenv, A_exp a
   if (!seq || !seq->head) return expTy(Tr_noExp(), Ty_Void());
 
   Tr_expList head = Tr_ExpList(NULL, NULL), p = head;
-  for (seq = a->u.seq; seq && seq->tail; seq = seq->tail) {
+  for (; seq && seq->tail; seq = seq->tail) {
     struct expty s = transExp(level, venv, tenv, seq->head, breakk);
     p->tail = Tr_ExpList(s.exp, NULL);
     p = p->tail;
@@ -278,7 +278,9 @@ struct expty transExp_forExp(Tr_level level, S_table venv, S_table tenv, A_exp a
               A_WhileExp(pos1,
                   A_OpExp(pos1, A_leOp, A_VarExp(pos1, A_SimpleVar(pos1, var)), A_VarExp(pos1, A_SimpleVar(pos1, lmt))),
                   A_SeqExp(pos2, A_ExpList(ebody, 
-                                 A_ExpList(A_OpExp(pos1, A_plusOp, A_VarExp(pos1, A_SimpleVar(pos1, var)), A_IntExp(pos1, 1)), NULL)))),
+                                 A_ExpList(A_OpExp(pos1, A_plusOp, A_VarExp(pos1, A_SimpleVar(pos1, var)), A_IntExp(pos1, 1)),
+                                 A_ExpList(A_SeqExp(pos2, NULL), // return no value
+                                 NULL))))),
               NULL)
   );
   return transExp(level, venv, tenv, transformed, breakk);

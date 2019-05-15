@@ -193,10 +193,10 @@ Tr_exp Tr_noExp() {
 }
 
 Tr_exp Tr_nilExp() {
-  Tr_Ex(T_Const(0));
+  return Tr_Ex(T_Const(0));
 }
 Tr_exp Tr_intExp(int i) {
-  Tr_Ex(T_Const(i));
+  return Tr_Ex(T_Const(i));
 }
 Tr_exp Tr_stringExp(string s) {
   Temp_label lab = Temp_newlabel();
@@ -288,8 +288,6 @@ Tr_exp Tr_stringNeExp(Tr_exp l, Tr_exp r) {
 Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
   Temp_label t = Temp_newlabel(), f = Temp_newlabel(), z = Temp_newlabel();
   Temp_temp r = Temp_newtemp();
-  doPatch(e1->u.cx.trues, t);
-  doPatch(e1->u.cx.trues, f);
   return Tr_Ex(T_Eseq(unNx(e1),
                T_Eseq(T_Label(t),
                T_Eseq(T_Move(T_Temp(r), unEx(e2)),
@@ -301,8 +299,6 @@ Tr_exp Tr_ifExp(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
 }
 Tr_exp Tr_ifExp_noValue(Tr_exp e1, Tr_exp e2, Tr_exp e3) {
   Temp_label t = Temp_newlabel(), f = Temp_newlabel();
-  doPatch(e1->u.cx.trues, t);
-  doPatch(e1->u.cx.trues, f);
   if (!e3) {
     return Tr_Nx(T_Seq(unNx(e1),
                  T_Seq(T_Label(t),
@@ -388,18 +384,6 @@ Tr_exp Tr_LetExp(Tr_expList decs, Tr_exp body) {
 }
 
 Tr_exp Tr_seqStm(Tr_expList list) {
-  // T_stm h = T_Seq(NULL, NULL), p = h;
-	// for (Tr_expList l = list; l; l = l->tail) {
-  //   T_stm s = unNx(l->head);
-  //   if (!(l->tail)) p->u.SEQ.right = s;
-  //   else p->u.SEQ.right = T_Seq(s, NULL);
-  //   p = p->u.SEQ.right;
-  // }
-  // p = h->u.SEQ.right;
-  // free(h);
-  
-  // return Tr_Nx(p);
-
   if (!list->tail) return list->head;
   return Tr_Nx(T_Seq(unNx(list->head), unNx(Tr_eseqExp(list->tail))));
 }
