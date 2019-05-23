@@ -80,19 +80,6 @@ F_accessList F_AccessList(F_access h, F_accessList t) {
   return p;
 };
 
-static Temp_temp framePoint = NULL;
-static Temp_temp returnValue = NULL;
-
-Temp_temp F_FP() {
-  if (!framePoint) framePoint = Temp_newtemp();
-  return framePoint;
-}
-
-Temp_temp F_RV() {
-  if (!returnValue) returnValue = Temp_newtemp();
-  return returnValue;
-}
-
 T_exp F_Exp(F_access acc, T_exp framePtr) {
   if (acc->kind == inFrame)
     return T_Mem(T_Binop(T_plus, T_Const(acc->u.offset), framePtr));
@@ -124,4 +111,97 @@ T_exp F_externalCall(string s, T_expList args) {
 
 T_stm F_procEntryExit1(F_frame frame, T_stm stm) {
   return stm;
+}
+
+/* x86-64 Strack Frame Structure:
+  *    %ebp (as frame pointer)
+  *    %rsp (as stack pointer)
+  *    %rax (as return value)
+  *    %rdi，%rsi，%rdx，%rcx，%r8，%r9 (for passing argument)
+  *    %rbx，%rbp，%r12，%r13，%14，%15 (callee usage rule)
+  *    %r10，%r11 (caller usage rule)
+  */
+
+Temp_temp F_FP() { // ebp
+  static Temp_temp r;
+  if (r) return r = NULL;
+  r = Temp_newtemp();
+  return r;
+}
+
+Temp_temp F_SP() { // rsp
+  static Temp_temp r = NULL;
+  if (r) return r;
+  r = Temp_newtemp();
+  return r;
+}
+
+Temp_temp F_RV() { // rax
+  static Temp_temp r = NULL;
+  if (r) return r;
+  r = Temp_newtemp();
+  return r;
+}
+
+Temp_tempList F_ARGS() {
+  static Temp_tempList argr = NULL;
+  if (argr) return argr;
+  for (int i = 0; i < 6; ++i) {
+    Temp_temp r = Temp_newtemp();
+    argr = Temp_TempList(r, argr);
+  }
+  return argr;
+}
+
+Temp_tempList F_CALLEE() {
+  static Temp_tempList callee = NULL;
+  if (callee) return callee;
+  for (int i = 0; i < 6; ++i) {
+    Temp_temp r = Temp_newtemp();
+    callee = Temp_TempList(r, callee);
+  }
+  return callee;
+}
+
+Temp_tempList F_CALLER() {
+  static Temp_tempList caller = NULL;
+  if (caller) return caller;
+  for (int i = 0; i < 2; ++i) {
+    Temp_temp r = Temp_newtemp();
+    caller = Temp_TempList(r, caller);
+  }
+  return caller;
+}
+
+
+Temp_map F_TempMap() {
+  static Temp_map m = NULL;
+
+  if (!m) {
+    m = Temp_empty();
+    Temp_enter(m, F_FP(), "fp");
+    Temp_enter(m, F_SP(), "sp");
+    Temp_enter(m, F_RV(), "rv");
+
+    Temp_tempList args = F_ARGS();
+    Temp_tempList callee = F_CALLEE();
+    Temp_tempList caller = F_CALLER();
+    string buf[10];
+    for (int i=0; args; args = args->tail, i++) {
+      sprintf(buf, "args%d", i);
+      Temp_enter(m, args, "");
+    }
+
+    for (int i=0; callee; callee = callee->tail, i++) {
+      sprintf(buf, "callee%d", i);
+      Temp_enter(m, args, "");
+    }
+
+    for (int i=0; caller; caller = caller->tail, i++) {
+      sprintf(buf, "caller%d", i);
+      Temp_enter(m, args, "");
+    }
+  }
+
+  return Temp_layerMap(m, Temp_name());
 }
