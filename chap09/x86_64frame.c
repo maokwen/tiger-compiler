@@ -4,10 +4,11 @@
 #include "symbol.h"
 #include "temp.h"
 #include "tree.h"
+#include "assem.h"
 #include "frame.h"
 
 struct F_frame_ {
-  Temp_label label;
+  Temp_label name;
   F_accessList formals; // static link as first formal argc
   F_accessList locals;
 };
@@ -26,7 +27,7 @@ const int F_wordSize = 8;
 static F_access InFrame(int offset);
 static F_access InReg(Temp_temp reg);
 
-Temp_label F_name(F_frame f) { return f->label; }
+Temp_label F_name(F_frame f) { return f->name; }
 F_accessList F_formals(F_frame f) { return f->formals; }
 
 F_access F_allocLocal(F_frame f, bool escape) {
@@ -42,7 +43,7 @@ F_access F_allocLocal(F_frame f, bool escape) {
 
 F_frame F_newFrame(Temp_label label, U_boolList escape) {
   F_frame f = (F_frame)checked_malloc(sizeof(*f));
-  f->label = label;
+  f->name = label;
   int offset = 0;
   int reg = 0;
 
@@ -113,6 +114,22 @@ T_stm F_procEntryExit1(F_frame frame, T_stm stm) {
   return stm;
 }
 
+AS_instrList F_procEntryExit2(AS_instrList body) {
+  static Temp_tempList returnSink = NULL;
+  if (returnSink) returnSink = Temp_TempList(
+    F_ZERO(), Temp_TempList(
+    F_RA(), Temp_TempList(
+    F_SP(), 
+    F_CALLEE())));
+  return AS_splice(body, AS_IOnstrList(
+    AS_Oper("", NULL, returnSink, NULL), NULL));
+}
+AS_proc F_procEntryExit3(F_frame frame, AS_instrList body) {
+  char buf[100];
+  sprintf(buf, "PROCEDURE %s\n", S_name(frame->name));
+  return AS_Proc(String(buf), body, "END\n");
+}
+
 /* x86-64 Strack Frame Structure:
   *    %ebp (as frame pointer)
   *    %rsp (as stack pointer)
@@ -173,6 +190,11 @@ Temp_tempList F_CALLER() {
   return caller;
 }
 
+Temp_temp F_ZERO() { // zf
+  static Temp_temp r = NULL;
+  if (!r) r = Temp_newtemp();
+  return r;
+}
 
 Temp_map F_TempMap() {
   static Temp_map m = NULL;
@@ -182,6 +204,7 @@ Temp_map F_TempMap() {
     Temp_enter(m, F_FP(), "fp");
     Temp_enter(m, F_SP(), "sp");
     Temp_enter(m, F_RV(), "rv");
+    Temp_enter(m, F_ZERO(), "zf");
 
     Temp_tempList args = F_ARGS();
     Temp_tempList callee = F_CALLEE();

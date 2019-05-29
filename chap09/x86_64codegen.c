@@ -278,13 +278,13 @@ static void munchStm(T_stm s) {
     }
     case T_LABEL: {
       sprintf(buf, "%s:\n", s->u.LABEL);
-      emit(AS_LABEL(String(bud), s->u.LABEL));
+      emit(AS_LABEL(String(buf), s->u.LABEL));
       return;
     }
     case T_JUMP: {
       Temp_temp t = munchExp(s->u.JUMP.exp);
       sprintf(buf, "JMP `d0");
-      emit(AS_Oper(String(buf), singleTemp(t), a->u.JUMP.jumps);
+      emit(AS_Oper(String(buf), singleTemp(t), s->u.JUMP.jumps));
       return;
     }
     case T_CJUMP: {
@@ -294,84 +294,84 @@ static void munchStm(T_stm s) {
       Temp_label true = s->u.CJUMP.true,
                  false = s->u.CJUMP.false;
       
-      switch (op->kind) {
+      switch (op) {
         case T_eq:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JE `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_ne:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JZ `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_lt:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JL `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_le:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JLE `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_gt:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JG `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_ge:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JGE `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_ult:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JNL `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_ule:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JNLE `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_ugt:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JNG `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
         case T_uge:{
           sprintf(buf, "CMP `s0 , `d0\n");
-          emit(AS_Move(String(buf), singleTemp(left), singleTemp(right)));
+          emit(AS_Oper(String(buf), singleTemp(left), singleTemp(right), NULL));
           sprintf(buf, "JNGE `d0\n");
-          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(TRUE, AS_Targets(false, NULL))));
+          emit(AS_Oper(String(buf), singleTemp(numchExp(true)), NULL, AS_Targets(Temp_TempList(true, Temp_TempList(false, NULL)))));
           break;
         }
       }
     }
     case T_MOVE: {
-      Temp_temp d = munchExp(s->u.MOVE.dist);
-      Temp_temp s = munchExp(s->u.MOVE.src);
+      Temp_temp dst = munchExp(s->u.MOVE.dst);
+      Temp_temp src = munchExp(s->u.MOVE.src);
       sprintf(buf, "mov `s0 `d0\n");
-      emit(AS_Move(String(buf), singleTemp(d), singleTemp(s)));
+      emit(AS_Move(String(buf), singleTemp(dst), singleTemp(src)));
     }
     case T_EXP: {
       munchExp(s->u.EXP);
