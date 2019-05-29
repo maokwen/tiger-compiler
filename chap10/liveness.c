@@ -21,11 +21,10 @@ static Temp_tempList lookupLiveMap(G_table t, G_node flownode);
 
 
 struct Live_graph Live_liveness(G_graph flow) {
-  G_table in = G_empty(), out = G_empty();
-
   // construct live map: remembers what is live at the exit of each flow-graph node
+  G_table in = G_empty(), out = G_empty();
   {
-    G_table in1 = G_empty(), out1 = G_empty(); // in & out 's backup
+    G_table in1 = G_empty(), out1 = G_empty();
     bool stable = FALSE;
     do {
       for (G_nodeList nodes = G_nodes(flow); nodes; nodes = nodes->tail) {
@@ -103,8 +102,71 @@ struct Live_graph Live_liveness(G_graph flow) {
     free(in1), free(out1);
   }
 
-  // construct conflict graph
-  {}
+  // construct interference graph
+  struct Live_graph lg;
+  {
+    G_graph graph = G_Graph();
+    Live_moveList moves = NULL;
+    TAB_table table = TAB_empty();
+    
+    for (G_nodeList nodes = G_nodes(flow); nodes; nodes = nodes->tail) {
+      G_node n = nodes->head;
+      Temp_tempList outs = lookupLiveMap(out, n);
+      if (!FG_isMove(n)){ /* addEdge(d for d in def[n], t for t in out[n]) */
+        Temp_tempList defs = FG_def(n);
+
+        for (Temp_tempList ds = defs; ds; ds = ds->tail) {
+          Temp_temp d = ds->head;
+          for (Temp_tempList ts = outs; ts; ts = ts->tail) {
+            Temp_temp t = ts->head;
+            // find t in interference graph
+            G_node t_node = TAB_look(table, t);
+            if (!t_node) {
+              t_node = G_Node(graph, t);
+              TAB_enter(table, t, t_node);
+            }
+            // d
+            G_node d_node = G_Node(graph, d);
+            TAB_enter(table, d, d_node);
+            
+            G_addEdge(d_node, t_node);
+          }
+        }
+      } else { /* for move a<-c, if b != c, addEdge(a, b for b in out[n]) */
+        Temp_temp a = FG_def(n)->head;
+        Temp_temp c = FG_use(n)->head;
+        assert(FG_def(n)->tail == NULL && FG_use(n)->tail == NULL);
+
+        for (Temp_tempList bs = outs; bs; bs = bs->tail) {
+          Temp_temp b = bs->head;
+          if (b == c) continue;
+
+          // find b in interference graph
+          G_node b_node = TAB_look(table, b);
+          if (!b_node) {
+            b_node = G_Node(graph, b);
+            TAB_enter(table, b, b_node);
+          }
+          G_node c_node = TAB_look(table, c);
+          if (!c_node) {
+            c_node = G_Node(graph, c);
+            TAB_enter(table, c, c_node);
+          }
+          // a
+          G_node a_node = G_Node(graph, a);
+          TAB_enter(table, a, a_node);
+          
+          G_addEdge(a_node, b_node);
+          moves = Live_MoveList(c_node, a_node, moves); // ?
+        }
+      }
+    }
+
+    lg.graph = graph;
+    lg.moves = moves;
+  }
+
+  return lg;
 }
 
 static void enterLiveMap(G_table t, G_node flowNode,
