@@ -52,6 +52,9 @@ Temp_tempList FG_def(G_node n) {
       assert(0);
   }
 }
+G_nodeList FG_succ(G_node n) {
+  return G_succ(n);
+}
 Temp_tempList FG_use(G_node n) {
   AS_instr ai = (AS_instr)G_nodeInfo(n);
   switch (ai->kind)
