@@ -117,10 +117,9 @@ T_stm F_procEntryExit1(F_frame frame, T_stm stm) {
 AS_instrList F_procEntryExit2(AS_instrList body) {
   static Temp_tempList returnSink = NULL;
   if (returnSink) returnSink = Temp_TempList(
-    F_ZERO(), Temp_TempList(
-    F_RA(), Temp_TempList(
+    F_RV(), Temp_TempList(
     F_SP(), 
-    F_CALLEE())));
+    F_CALLEE()));
   return AS_splice(body, AS_IOnstrList(
     AS_Oper("", NULL, returnSink, NULL), NULL));
 }

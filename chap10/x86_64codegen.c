@@ -260,7 +260,7 @@ static Temp_temp munchExp(T_exp e) {
     case T_CALL: {
       Temp_temp r = munchExp(e->u.CALL.fun);
       Temp_tempList l = munchArgs(0, e->u.CALL.args);
-      Temp_tempList calldefs = NULL; // todo
+      Temp_tempList calldefs = Temp_TempList(F_RV(), F_CALLEE());
       sprintf(buf, "call %s\n", Temp_labelstring((e->u.CALL.fun->u.NAME)));
       emit(AS_Oper(String(buf), calldefs, Temp_TempList(r, l), NULL));
       return F_RV();
@@ -380,42 +380,30 @@ static void munchStm(T_stm s) {
 }
 
 static Temp_tempList munchArgs(int n, T_expList args) {
-
-  Temp_tempList h = Temp_TempList(NULL, NULL), p = h;
-
-  char buf[100];
+  // move or push call arguments, in reverse
+  Temp_tempList p = NULL;
 
   // in register: %rdi，%rsi，%rdx，%rcx，%r8，%r9
-  Temp_tempList regs = F_ARGS();
-  for (;
+  for (Temp_tempList regs = F_ARGS();
        args && regs;
        args=args->tail, regs=regs->tail) {
     Temp_temp e = munchExp(args->head);
 
-    sprintf(buf, "MOV `s0 , `d0");
-    emit(AS_Move(String(buf), singleTemp(regs->head), singleTemp(e)));
+    emit(AS_Move(String("MOV `s0 , `d0"), singleTemp(regs->head), singleTemp(e)));
 
-    p->tail = Temp_TempList(singleTemp(regs->head), NULL);
+    p = Temp_TempList(e, p);
   }
   
-  if (n <= 6) {
-    p = h->tail;
-    free(h);
-    return p;
-  }
+  if (n <= 6) return p;
 
   // in frame: (%rbp), 8(%rbp), ...
   for (int i = 0; args->head; args=args->tail) {
     Temp_temp e = munchExp(args->head);
 
-    char buf[100];
-    sprintf(buf, "MOV %d(`s0) , `d0", 8*i);
-    emit(AS_Move(String(buf), String(F_SP()), singleTemp(e)));
+    emit(AS_Oper(String("PUSHL `d0"), singleTemp(F_SP()), singleTemp(e), NULL));
 
-    p->tail = Temp_TempList(NULL, NULL); //?
+    p = Temp_TempList(e, p);
   }
 
-  p = h->tail;
-  free(h);
   return p;
 }
