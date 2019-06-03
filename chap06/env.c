@@ -5,12 +5,14 @@
 #include "absyn.h"
 #include "types.h"
 #include "temp.h"
+#include "frame.h"
 #include "translate.h"
 #include "env.h"
 
-E_enventry E_VarEntry(Ty_ty ty) {
+E_enventry E_VarEntry(Tr_access access, Ty_ty ty) {
   E_enventry env=checked_malloc(sizeof(*env));
   env->kind=E_varEntry; env->u.var.ty=ty;
+  env->u.var.access = access;
   return env;
 }
 E_enventry E_FunEntry(Tr_level level, Temp_label label, Ty_tyList formals,

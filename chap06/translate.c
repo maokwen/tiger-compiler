@@ -4,7 +4,6 @@
 #include "symbol.h"
 #include "temp.h"
 #include "frame.h"
-#include "tree.h"
 #include "translate.h"
 
 struct Tr_level_ { Tr_level parent; F_frame frame; };
@@ -16,12 +15,9 @@ struct Tr_access_ {
 Tr_access Tr_Access(Tr_level level, F_access access);
 
 Tr_level Tr_outermost(void) {
-  static Tr_level outermost = NULL;
-  if (!outermost) {
-    outermost = checked_malloc(sizeof(*outermost));
-    outermost->parent = NULL;
-    outermost->frame = F_newFrame(Temp_newlabel(), NULL);
-  }
+  static Tr_level outermost;
+  if (!outermost)
+    outermost = Tr_newLevel(NULL, Temp_newlabel(), NULL);
   return outermost;
 }
 
