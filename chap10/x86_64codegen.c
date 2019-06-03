@@ -64,7 +64,7 @@ static Temp_temp munchExp(T_exp e) {
       }
       /* MEM(CONST(i)) */
       else if (e->u.MEM->kind == T_Const) {
-        sprintf(buf, "MOV [`s0] , `d0\n", e->u.MEM->u.CONST);
+        sprintf(buf, "MOV [`%d] , `d0\n", e->u.MEM->u.CONST);
         emit(AS_Move(String(buf), singleTemp(r), NULL));
       }
       /* MEM(e1) */
@@ -284,7 +284,7 @@ static void munchStm(T_stm s) {
     case T_JUMP: {
       Temp_temp t = munchExp(s->u.JUMP.exp);
       sprintf(buf, "JMP `d0");
-      emit(AS_Oper(String(buf), singleTemp(t), s->u.JUMP.jumps));
+      emit(AS_Oper(String(buf), singleTemp(t), NULL, s->u.JUMP.jumps));
       return;
     }
     case T_CJUMP: {
